@@ -19,6 +19,10 @@ LLM_API_URL = "https://text.pollinations.ai/openai"
 LLM_MODEL = "openai"
 PLAUSIBILITY_THRESHOLD = 0.5
 
-# --- Device ---
-import torch
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+# --- Device (lazy import — torch only needed in Phase 2+) ---
+def get_device():
+    try:
+        import torch
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    except ImportError:
+        return "cpu"
