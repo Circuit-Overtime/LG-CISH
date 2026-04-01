@@ -6,34 +6,42 @@
 
 These modules work independently. Each one can be tested on its own.
 
-- [ ] **Project setup**
-  - [ ] Create venv
-  - [ ] Install dependencies from requirements.txt
-  - [ ] Verify `import torch`, `import clip`, `import numpy` all work
+- [x] **Project setup**
+  - [x] Create venv
+  - [x] Install dependencies from requirements.txt
+  - [ ] Verify `import torch`, `import clip`, `import numpy` all work *(deferred to Phase 2 — not needed yet)*
 
-- [ ] **config.py** — Central constants
-  - [ ] CLIP model name, embedding dimension
-  - [ ] Min CLIP distance threshold
-  - [ ] File paths (codebook, image dir)
-  - [ ] Device detection (cuda/cpu)
-  - [ ] Pollinations API endpoint
+- [x] **config.py** — Central constants
+  - [x] CLIP model name, embedding dimension
+  - [x] Min CLIP distance threshold
+  - [x] File paths (codebook, image dir)
+  - [x] Device detection (cuda/cpu) — lazy import, no torch dependency
+  - [x] Pollinations API endpoint
 
-- [ ] **bitstream/converter.py** — Message ↔ Bits ↔ Chunks
-  - [ ] `message_to_bytes(msg)` → raw UTF-8 bytes
-  - [ ] `bytes_to_bits(data)` → binary string ("01001000...")
-  - [ ] `bits_to_chunks(bits, chunk_size)` → list of integer indices + padding count
-  - [ ] `chunks_to_bits(chunks, chunk_size, padding)` → binary string
-  - [ ] `bits_to_bytes(bits)` → raw bytes
-  - [ ] `bytes_to_message(data)` → string
-  - [ ] Round-trip test: message → bytes → bits → chunks → bits → bytes → message = exact match
+- [x] **bitstream/converter.py** — Message ↔ Bits ↔ Chunks (13/13 tests pass)
+  - [x] `message_to_bytes(msg)` → raw UTF-8 bytes
+  - [x] `bytes_to_bits(data)` → binary string ("01001000...")
+  - [x] `bits_to_chunks(bits, chunk_size)` → list of integer indices + padding count
+  - [x] `chunks_to_bits(chunks, chunk_size, padding)` → binary string
+  - [x] `bits_to_bytes(bits)` → raw bytes
+  - [x] `bytes_to_message(data)` → string
+  - [x] `compress(data)` / `decompress(data)` — zlib wrappers
+  - [x] `encode_message(msg, chunk_size)` — full encode helper
+  - [x] `decode_chunks(chunks, metadata)` — full decode helper
+  - [x] Round-trip test: ASCII, Unicode, emoji, empty string, 500-char — all pass
 
-- [ ] **crypto/aes_layer.py** — Encryption + Integrity
-  - [ ] `encrypt(plaintext_bytes, key)` → ciphertext bytes (AES-256-CBC, random IV prepended)
-  - [ ] `decrypt(ciphertext_bytes, key)` → plaintext bytes
-  - [ ] `compute_crc(data)` → 4-byte CRC-32
-  - [ ] `verify_crc(data, expected_crc)` → bool
-  - [ ] Round-trip test: encrypt → decrypt = exact match
-  - [ ] CRC test: compute → verify = True, tamper → verify = False
+- [x] **crypto/aes_layer.py** — Encryption + Integrity (8/8 tests pass)
+  - [x] `generate_key()` → random 256-bit key
+  - [x] `encrypt(plaintext_bytes, key)` → ciphertext bytes (AES-256-CBC, random IV prepended)
+  - [x] `decrypt(ciphertext_bytes, key)` → plaintext bytes
+  - [x] `compute_crc(data)` → 4-byte CRC-32
+  - [x] `verify_crc(data, expected_crc)` → bool
+  - [x] `wrap(data, key)` / `unwrap(data, key)` — CRC + optional AES in one call
+  - [x] Round-trip test: encrypt → decrypt = exact match
+  - [x] CRC test: compute → verify = True, tamper → verify = False
+  - [x] Wrong key test: correctly raises exception
+
+- [x] **tests/test_phase1.py** — 21/21 tests passing
 
 ---
 
@@ -171,8 +179,8 @@ These are what make the paper novel. Build only after Phase 3 is fully working.
 
 | Milestone | Depends On | Proof |
 |-----------|-----------|-------|
-| Bitstream round-trip works | Phase 1 | message → bits → chunks → bits → message = exact |
-| AES round-trip works | Phase 1 | encrypt → decrypt = exact |
+| Bitstream round-trip works | Phase 1 | **DONE** — 13/13 tests pass |
+| AES round-trip works | Phase 1 | **DONE** — 8/8 tests pass |
 | CLIP embeddings load | Phase 2 | embed_image returns 512-dim vector |
 | Codebook builds successfully | Phase 2 | codebook.npz exists, shapes correct |
 | Encode produces image list | Phase 3 | list of N image paths returned |
