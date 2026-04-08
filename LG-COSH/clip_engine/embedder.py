@@ -2,7 +2,12 @@ import clip
 import torch
 import numpy as np
 from PIL import Image
-from config import CLIP_MODEL, DEVICE
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import CLIP_MODEL, get_device
+
+DEVICE = get_device()
 
 _model = None
 _preprocess = None
