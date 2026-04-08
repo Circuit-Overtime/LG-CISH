@@ -8,7 +8,12 @@ EMBEDDING_DIM = 512
 MIN_CLIP_DISTANCE = 0.85  # max cosine similarity allowed between any two codebook images
 CODEBOOK_PATH = os.path.join(os.path.dirname(__file__), "data", "codebook.npz")
 
-# --- Image Database ---
+# --- Image Database (DIV2K) ---
+# DIV2K: 900 train + 100 validation = 1000 high-res diverse images
+# Chosen for: high resolution, semantic diversity, standard in image processing papers
+DATASET_NAME = "DIV2K"
+DATASET_TRAIN_URL = "http://data.vision.ee.ethz.ch/cvl/DIV2K/DIV2K_train_HR.zip"
+DATASET_VALID_URL = "http://data.vision.ee.ethz.ch/cvl/DIV2K/DIV2K_valid_HR.zip"
 IMAGE_DIR = os.path.join(os.path.dirname(__file__), "data", "images")
 
 # --- Crypto ---
