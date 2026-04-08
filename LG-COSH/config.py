@@ -15,8 +15,8 @@ IMAGE_DIR = os.path.join(os.path.dirname(__file__), "data", "images")
 AES_KEY_SIZE = 32  # 256-bit
 
 # --- Plausibility (Pollinations API - OpenAI compatible) ---
-LLM_API_URL = "https://text.pollinations.ai/openai"
-LLM_MODEL = "openai"
+LLM_BASE_URL = "https://gen.pollinations.ai"
+LLM_MODEL = "openai"  # GPT-5 Mini — fast & balanced
 PLAUSIBILITY_THRESHOLD = 0.5
 
 # --- Device (lazy import — torch only needed in Phase 2+) ---
