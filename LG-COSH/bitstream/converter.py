@@ -80,6 +80,68 @@ def decompress(data: bytes) -> bytes:
     return zlib.decompress(data)
 
 
+# --- Base-N positional coding (the coverless image-sequence channel) ---
+#
+# With a codebook of N images we treat the whole payload as one big integer and
+# write it in radix N. Each base-N digit selects one image, so every image carries
+# log2(N) bits (e.g. N=6 -> 2.585 bits/image) instead of floor(log2(N)) = 2 bits.
+# The sequence (identity AND order) of images *is* the message. Fully lossless.
+
+def bytes_to_int(data: bytes) -> int:
+    """Map raw bytes to a non-negative integer.
+
+    A 0x01 sentinel byte is prepended so that leading zero bytes of `data` are
+    preserved through the int round-trip (int.from_bytes would otherwise lose them).
+    """
+    return int.from_bytes(b"\x01" + data, "big")
+
+
+def int_to_bytes(value: int) -> bytes:
+    """Inverse of bytes_to_int. Strips the 0x01 sentinel byte."""
+    length = (value.bit_length() + 7) // 8
+    raw = value.to_bytes(length, "big")
+    if raw[0] != 1:
+        raise ValueError("sentinel byte mismatch — corrupted integer")
+    return raw[1:]
+
+
+def int_to_base_n(value: int, n: int) -> list[int]:
+    """Convert a non-negative integer to a list of base-n digits (MSB first).
+
+    The leading digit is always non-zero (no ambiguous leading-zero digits),
+    because the 0x01 sentinel guarantees value >= 1.
+    """
+    if n < 2:
+        raise ValueError("base must be >= 2")
+    if value == 0:
+        return [0]
+    digits = []
+    while value > 0:
+        digits.append(value % n)
+        value //= n
+    return digits[::-1]
+
+
+def base_n_to_int(digits: list[int], n: int) -> int:
+    """Convert a list of base-n digits (MSB first) back to an integer."""
+    value = 0
+    for d in digits:
+        if d < 0 or d >= n:
+            raise ValueError(f"digit {d} out of range for base {n}")
+        value = value * n + d
+    return value
+
+
+def bytes_to_indices(data: bytes, n: int) -> list[int]:
+    """Full forward map: payload bytes -> ordered codebook indices (base-n digits)."""
+    return int_to_base_n(bytes_to_int(data), n)
+
+
+def indices_to_bytes(indices: list[int], n: int) -> bytes:
+    """Full inverse map: ordered codebook indices -> payload bytes."""
+    return int_to_bytes(base_n_to_int(indices, n))
+
+
 def get_chunk_size(database_size: int) -> int:
     """Calculate chunk size (bits per image) from database size.
 
