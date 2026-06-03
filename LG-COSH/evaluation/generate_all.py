@@ -24,7 +24,7 @@ import robustness as s_rob
 import security as s_sec
 import ablation as s_abl
 import comparison as s_cmp
-import statistics as s_stat
+import stats_section as s_stat
 
 
 def rel(p):
