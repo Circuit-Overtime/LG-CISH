@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\caption{Table 4.6 — Ablation. CLIP gives JPEG robustness pHash lacks; base-N coding and compression reduce image count; CRC provides error detection.}
+\label{tab:table_4_6_ablation}
+\begin{tabular}{lcccc}
+\hline
+Variant & Clean Acc (%) & JPEG50 Acc (%) & Avg Images & Integrity \\
+\hline
+Full LG-CISH (proposed) & 100.00 & 100.00 & 276.5 & CRC-32 \\
+Without CLIP (pHash NN) & 100.00 & 100.00 & 276.5 & CRC-32 \\
+Without compression & 100.00 & 100.00 & 374.5 & CRC-32 \\
+Without CRC integrity & 100.00 & 100.00 & 276.5 & None (silent) \\
+Fixed-chunk (2-bit) & 100.00 & 100.00 & 356.5 & CRC-32 \\
+\hline
+\end{tabular}
+\end{table}
