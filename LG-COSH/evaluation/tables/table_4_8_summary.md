@@ -2,7 +2,7 @@
 
 | Metric | Mean ± Std | 95% CI |
 | --- | --- | --- |
-| Reconstruction Accuracy (%) | 100.00 ± 0.00 | [nan, nan] |
-| Bit Error Rate | 0.00e+00 ± 0.00e+00 | [nan, nan] |
+| Reconstruction Accuracy (%) | 100.00 ± 0.00 | [100.00, 100.00] |
+| Bit Error Rate | 0.00e+00 ± 0.00e+00 | [0.00e+00, 0.00e+00] |
 | CLIP margin | 0.4223 ± 0.0016 | [0.4218, 0.4227] |
 | Images per message | 372.3 ± 91.5 | [346.1, 398.6] |
