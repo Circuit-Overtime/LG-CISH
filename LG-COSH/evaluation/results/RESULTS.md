@@ -75,10 +75,10 @@ The 6 codebook images are mutually well-separated in CLIP space (max pairwise si
 | Stage | Time (ms) |
 | --- | --- |
 | Full encode (200-char msg) | 0.09 |
-| CLIP embedding (per image) | 33.29 |
-| Index recovery (388 images) | 11221.57 |
-| Full decode (388 images) | 11555.05 |
-| Decode per image (amortised) | 29.78 |
+| CLIP embedding (per image) | 34.59 |
+| Index recovery (388 images) | 11953.71 |
+| Full decode (388 images) | 12067.98 |
+| Decode per image (amortised) | 31.10 |
 
 
 
@@ -131,18 +131,18 @@ Keyspace ≈ 2^265 (codebook orderings × AES-256). CRC-32 catches **100.00%** o
 
 ## 4.6 Ablation Study
 
-**Table 4.6 — Ablation. CLIP gives JPEG robustness pHash lacks; base-N coding and compression reduce image count; CRC provides error detection.**
+**Table 4.6 — Ablation. CLIP gives geometric robustness pHash lacks (Crop-40%: 100% vs 0%); base-N coding and compression reduce image count; CRC provides error detection.**
 
-| Variant | Clean Acc (%) | JPEG50 Acc (%) | Avg Images | Integrity |
-| --- | --- | --- | --- | --- |
-| Full LG-CISH (proposed) | 100.00 | 100.00 | 276.5 | CRC-32 |
-| Without CLIP (pHash NN) | 100.00 | 100.00 | 276.5 | CRC-32 |
-| Without compression | 100.00 | 100.00 | 374.5 | CRC-32 |
-| Without CRC integrity | 100.00 | 100.00 | 276.5 | None (silent) |
-| Fixed-chunk (2-bit) | 100.00 | 100.00 | 356.5 | CRC-32 |
+| Variant | Clean Acc (%) | JPEG50 Acc (%) | Crop40 Acc (%) | Avg Images | Integrity |
+| --- | --- | --- | --- | --- | --- |
+| Full LG-CISH (proposed) | 100.00 | 100.0 | 100.0 | 276.5 | CRC-32 |
+| Without CLIP (pHash NN) | 100.0 | 100.0 | 0.0 | 276.5 | CRC-32 |
+| Without compression | 100.00 | 100.0 | 100.0 | 374.5 | CRC-32 |
+| Without CRC integrity | 100.00 | 100.0 | 100.0 | 276.5 | None (silent) |
+| Fixed-chunk (2-bit) | 100.00 | 100.0 | 100.0 | 356.5 | CRC-32 |
 
 
-With this maximally-separated 6-image codebook both CLIP and pHash decode JPEG-50 perfectly (100.0% vs 100.0%); CLIP's advantage emerges under harsher geometric attacks (Section 4.8, Crop 40%: CLIP 100% vs pHash 0%). The coding ablations show clear effects: disabling compression inflates the sequence (276.5 → 374.5 images), fixed-chunk coding needs 356.5 images vs 276.5 for base-N, and removing CRC-32 leaves channel errors undetected.
+Both CLIP and pHash decode JPEG-50 perfectly on this maximally-separated codebook, but under the harsher Crop-40% attack the semantic CLIP matcher holds at 100% while pHash collapses to 0% — the geometric robustness that motivates CLIP. The coding ablations show clear effects: disabling compression inflates the sequence (276.5 → 374.5 images), fixed-chunk coding needs 356.5 images vs 276.5 for base-N, and removing CRC-32 leaves channel errors undetected.
 
 
 ## 4.7 Comparative Analysis
