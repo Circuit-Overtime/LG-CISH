@@ -1,0 +1,87 @@
+elixpo@elixpoLap:~/LG-CISH/LG-COSH$ python tests/test_phase3.py
+
+=== Base-N positional coding (math only) ===
+  PASS  base-2 round-trip (0B)
+  PASS  base-2 digits in range
+  PASS  base-2 round-trip (1B)
+  PASS  base-2 digits in range
+  PASS  base-2 round-trip (4B)
+  PASS  base-2 digits in range
+  PASS  base-2 round-trip (11B)
+  PASS  base-2 digits in range
+  PASS  base-2 round-trip (64B)
+  PASS  base-2 digits in range
+  PASS  base-6 round-trip (0B)
+  PASS  base-6 digits in range
+  PASS  base-6 round-trip (1B)
+  PASS  base-6 digits in range
+  PASS  base-6 round-trip (4B)
+  PASS  base-6 digits in range
+  PASS  base-6 round-trip (11B)
+  PASS  base-6 digits in range
+  PASS  base-6 round-trip (64B)
+  PASS  base-6 digits in range
+  PASS  base-16 round-trip (0B)
+  PASS  base-16 digits in range
+  PASS  base-16 round-trip (1B)
+  PASS  base-16 digits in range
+  PASS  base-16 round-trip (4B)
+  PASS  base-16 digits in range
+  PASS  base-16 round-trip (11B)
+  PASS  base-16 digits in range
+  PASS  base-16 round-trip (64B)
+  PASS  base-16 digits in range
+  PASS  base-256 round-trip (0B)
+  PASS  base-256 digits in range
+  PASS  base-256 round-trip (1B)
+  PASS  base-256 digits in range
+  PASS  base-256 round-trip (4B)
+  PASS  base-256 digits in range
+  PASS  base-256 round-trip (11B)
+  PASS  base-256 digits in range
+  PASS  base-256 round-trip (64B)
+  PASS  base-256 digits in range
+
+=== Loading codebook ===
+Loaded codebook: 6 images, 2.585 bits/image (base-6)
+
+=== Full pipeline: encode -> CLIP decode -> verify ===
+  PASS  [short] CLIP recovers exact indices (53 imgs)
+  PASS  [short] message round-trips losslessly
+  PASS  [ascii] CLIP recovers exact indices (165 imgs)
+  PASS  [ascii] message round-trips losslessly
+  PASS  [unicode] CLIP recovers exact indices (162 imgs)
+  PASS  [unicode] message round-trips losslessly
+  PASS  [empty] CLIP recovers exact indices (38 imgs)
+  PASS  [empty] message round-trips losslessly
+  PASS  [long] CLIP recovers exact indices (189 imgs)
+  PASS  [long] message round-trips losslessly
+
+=== With AES-256-CBC encryption ===
+  PASS  [short] encrypted round-trip
+  PASS  [unicode] encrypted round-trip
+
+=== Tamper / wrong-key detection ===
+  PASS  wrong key raises CRC error
+
+==================================================
+Phase 3 Results: 53 passed, 0 failed out of 53
+==================================================
+(venv) elixpo@elixpoLap:~/LG-CISH/LG-COSH$ python main.py demo "HELLO WORLD"
+Loaded codebook: 6 images, 2.585 bits/image (base-6)
+
+============================================================
+  LG-CISH round-trip demo
+============================================================
+Original message : 'HELLO WORLD'
+Encryption       : off (CRC only)
+Compression      : zlib
+
+Encoded into 72 images (indices [2, 0, 1, 1, 2, 3, 2, 5, 1, 0, 1, 1, 4, 2, 2, 2, 3, 1, 4, 2, 5, 0, 4, 5, 0, 5, 2, 1, 4, 4, 5, 1, 3, 3, 5, 2, 1, 3, 3, 2, 2, 5, 5, 5, 0, 1, 5, 2, 1, 4, 3, 5, 2, 2, 0, 2, 3, 2, 5, 5, 4, 3, 0, 3, 1, 5, 4, 2, 0, 1, 0, 3])
+CLIP recovered indices match: True  (min margin 0.3901)
+
+Decoded message  : 'HELLO WORLD'
+============================================================
+ROUND-TRIP: SUCCESS
+============================================================
+(venv) elixpo@elixpoLap:~/LG-CISH/LG-COSH$ 
