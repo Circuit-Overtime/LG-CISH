@@ -21,10 +21,11 @@ def build_codebook(image_dir: str = IMAGE_DIR, save_path: str = CODEBOOK_PATH) -
         2. Compute CLIP embeddings (batched)
         3. Prune similar images
         4. Assign indices 0..N-1
-        5. Compute chunk_size = floor(log2(N))
+        5. Keep ALL N images (base-N positional coding -> log2(N) bits/image)
         6. Save codebook.npz
 
-    Returns dict with keys: paths, embeddings, chunk_size, n_images.
+    Returns dict with keys: paths, embeddings, n_images, bits_per_image, chunk_size.
+    `chunk_size` is retained as floor(log2(N)) for the fixed-chunk ablation baseline.
     """
     # 1. Collect images
     paths = list_images()
@@ -37,26 +38,25 @@ def build_codebook(image_dir: str = IMAGE_DIR, save_path: str = CODEBOOK_PATH) -
     embeddings = embed_images_batch(paths)
     print(f"Embeddings shape: {embeddings.shape}")
 
-    # 3. Prune similar images
+    # 3. Prune near-duplicate images (keeps CLIP nearest-neighbour unambiguous)
     embeddings, paths = prune_similar(embeddings, paths)
 
-    # 4. Compute chunk_size (bits per image)
+    # 4/5. Keep all N images. Base-N positional coding uses the full radix.
     n = len(paths)
-    chunk_size = int(math.floor(math.log2(n)))
-    effective_n = 2 ** chunk_size  # only use first 2^chunk_size images
-    paths = paths[:effective_n]
-    embeddings = embeddings[:effective_n]
+    bits_per_image = math.log2(n)
+    chunk_size = int(math.floor(bits_per_image))  # fixed-chunk baseline (ablation)
 
-    print(f"Codebook: {effective_n} images, chunk_size={chunk_size} bits/image")
+    print(f"Codebook: {n} images, {bits_per_image:.3f} bits/image (base-{n})")
 
-    # 5. Save
+    # 6. Save
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     np.savez(
         save_path,
         paths=np.array(paths, dtype=object),
         embeddings=embeddings,
         chunk_size=chunk_size,
-        n_images=effective_n,
+        n_images=n,
+        bits_per_image=bits_per_image,
     )
     print(f"Codebook saved to {save_path}")
 
@@ -64,7 +64,8 @@ def build_codebook(image_dir: str = IMAGE_DIR, save_path: str = CODEBOOK_PATH) -
         "paths": paths,
         "embeddings": embeddings,
         "chunk_size": chunk_size,
-        "n_images": effective_n,
+        "n_images": n,
+        "bits_per_image": bits_per_image,
     }
 
 
@@ -78,13 +79,15 @@ def load_codebook(path: str = CODEBOOK_PATH) -> dict:
     embeddings = data["embeddings"]
     chunk_size = int(data["chunk_size"])
     n_images = int(data["n_images"])
+    bits_per_image = float(data["bits_per_image"]) if "bits_per_image" in data else math.log2(n_images)
 
-    print(f"Loaded codebook: {n_images} images, chunk_size={chunk_size} bits/image")
+    print(f"Loaded codebook: {n_images} images, {bits_per_image:.3f} bits/image (base-{n_images})")
     return {
         "paths": paths,
         "embeddings": embeddings,
         "chunk_size": chunk_size,
         "n_images": n_images,
+        "bits_per_image": bits_per_image,
     }
 
 
