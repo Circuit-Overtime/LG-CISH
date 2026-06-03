@@ -123,9 +123,12 @@ def chi_square_p(arr: np.ndarray) -> float:
 
     Embedding equalises the histogram pairs (2k, 2k+1); a high p means the
     pairs are suspiciously equal (likely embedded), p≈0 means a natural image.
+
+    Operates on the RAW channel values (not a grayscale projection) so that the
+    per-channel LSB structure the attack targets is preserved.
     """
-    gray = np.asarray(Image.fromarray(arr).convert("L")).flatten()
-    hist = np.bincount(gray, minlength=256).astype(np.float64)
+    vals = np.asarray(arr).astype(np.int64).flatten()
+    hist = np.bincount(vals, minlength=256).astype(np.float64)
     obs, exp = [], []
     for k in range(128):
         h0, h1 = hist[2 * k], hist[2 * k + 1]

@@ -105,11 +105,15 @@ def main():
     # 4.6
     w("\n## 4.6 Ablation Study\n")
     w(r_abl["table"])
-    w(f"\nReplacing CLIP with pHash drops JPEG-50 accuracy from "
-      f"{r_abl['clip_jpeg50']:.1f}% to {r_abl['phash_jpeg50']:.1f}%; disabling "
-      f"compression inflates the sequence ({r_abl['avg_full']:.1f} → "
-      f"{r_abl['avg_nocomp']:.1f} images); fixed-chunk coding needs "
-      f"{r_abl['avg_fixed']:.1f} images vs {r_abl['avg_full']:.1f} for base-N.\n")
+    w(f"\nWith this maximally-separated 6-image codebook both CLIP and pHash decode "
+      f"JPEG-50 perfectly ({r_abl['clip_jpeg50']:.1f}% vs {r_abl['phash_jpeg50']:.1f}%); "
+      f"CLIP's advantage emerges under harsher geometric attacks (Section 4.8, "
+      f"{r_stat['harsh_attack']}: CLIP {r_stat['clip_harsh']:.0f}% vs pHash "
+      f"{r_stat['phash_harsh']:.0f}%). The coding ablations show clear effects: "
+      f"disabling compression inflates the sequence ({r_abl['avg_full']:.1f} → "
+      f"{r_abl['avg_nocomp']:.1f} images), fixed-chunk coding needs "
+      f"{r_abl['avg_fixed']:.1f} images vs {r_abl['avg_full']:.1f} for base-N, and "
+      f"removing CRC-32 leaves channel errors undetected.\n")
 
     # 4.7
     w("\n## 4.7 Comparative Analysis\n")
@@ -121,8 +125,13 @@ def main():
     w("\n## 4.8 Statistical Validation\n")
     w(r_stat["summary"]); w("\n")
     w(r_stat["significance"])
-    w(f"\nThe proposed CLIP matcher significantly outperforms the pHash ablation under "
-      f"JPEG-50 (Welch t-test, p = {r_stat['p_value']:.2e} < 0.05). One-way ANOVA across "
+    sig_txt = ("statistically significant (p < 0.05)" if r_stat["p_value"] < 0.05
+               else "not statistically significant at this sample size")
+    w(f"\nThe proposed method is bit-exact under JPEG-50 ({r_stat['prop_acc']:.0f}%) whereas "
+      f"LSB collapses to {r_stat['lsb_acc']:.1f}% bit accuracy; the difference is {sig_txt} "
+      f"(Welch t-test, p = {r_stat['p_value']:.2e}). Under a harsher {r_stat['harsh_attack']} "
+      f"attack the semantic CLIP matcher still outperforms the pHash ablation "
+      f"({r_stat['clip_harsh']:.0f}% vs {r_stat['phash_harsh']:.0f}%). One-way ANOVA across "
       f"message-length buckets shows the CLIP margin is homogeneous "
       f"(F = {r_stat['anova_F']:.2f}, p = {r_stat['anova_p']:.2f}).\n")
 

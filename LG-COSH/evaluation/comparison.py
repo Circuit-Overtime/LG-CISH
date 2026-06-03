@@ -103,15 +103,17 @@ def graph_detection(detection):
     return out
 
 
-def comparison_table(cb, rob):
-    """rob: dict from graph_robustness (for JPEG50 accuracy)."""
+def comparison_table(cb, rob, detection):
+    """rob: dict from graph_robustness (for JPEG50 accuracy). detection: measured %."""
     j50 = rob["qualities"].index(50)
+    d_lsb = f"{detection.get('LSB', 0):.0f}"
+    d_prop = f"{detection.get('Proposed', 0):.0f}"
     rows = [
-        ["LSB", f"{B.lsb_capacity_bits((512,512,3)):,}", f"{rob['lsb'][j50]:.1f}", "~95–100", "0.01–1", "51.1"],
-        ["DCT-LSB", "~4096", f"{rob['dct'][j50]:.1f}", "~70–90", "1–5", "38–42"],
+        ["LSB", f"{B.lsb_capacity_bits((512,512,3)):,}", f"{rob['lsb'][j50]:.1f}", d_lsb, "0.01–1", "51.1"],
+        ["DCT-LSB", "~4096", f"{rob['dct'][j50]:.1f}", "~70–90 [cited]", "1–5", "38–42"],
         ["DWT-DCT [cited]", "~4096", "~85 [cited]", "~60–80 [cited]", "~50", "40–44"],
         ["Coverless [cited]", "low", "~95 [cited]", "~50 [cited]", "high", "∞"],
-        ["Proposed LG-CISH", f"{cb['bits_per_image']:.3f}/img", f"{rob['proposed'][j50]:.1f}", "~50", "fast", "∞"],
+        ["Proposed LG-CISH", f"{cb['bits_per_image']:.3f}/img", f"{rob['proposed'][j50]:.1f}", d_prop, "fast", "∞"],
     ]
     md = C.save_table(
         "table_4_7_comparison", rows,
@@ -139,7 +141,7 @@ def run(detection=None):
         detection = {"LSB": det_lsb, "DCT-LSB": min(det_lsb, 88.0), "Proposed": det_prop}
 
     det_fig = graph_detection(detection)
-    cmp_md = comparison_table(cb, rob)
+    cmp_md = comparison_table(cb, rob, detection)
     print(cmp_md)
     print(f"  Figures: {rob_fig}\n           {pay_fig}\n           {det_fig}")
     return {"table": cmp_md, "robustness_curve": rob,
