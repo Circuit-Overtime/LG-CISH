@@ -137,15 +137,12 @@ def chi_square_p(arr: np.ndarray) -> float:
         return 0.0
     obs = np.array(obs)
     exp = np.array(exp)
-    stat = np.sum((obs - exp) ** 2 / exp)
+    stat = float(np.sum((obs - exp) ** 2 / exp))
     df = len(obs) - 1
-    # p(embedded) = probability the observed deviation is THIS small under "no embedding"
-    return float(chi2_dist.cdf(df - stat, df)) if False else float(1.0 - chi2_dist.sf(stat, df) * 0 + chi2_dist.cdf(0, df) * 0 + _embed_prob(stat, df))
-
-
-def _embed_prob(stat, df):
-    # Westfeld: p of embedding = 1 - CDF(chi2, df)  evaluated so that small stat -> p~1
-    return float(1.0 - chi2_dist.cdf(stat, df))
+    # Westfeld & Pfitzmann: p(embedded) = SF(stat, df) = 1 - CDF(stat, df).
+    # Embedding equalises histogram pairs -> small stat -> p ~ 1.
+    # A natural image has unequal pairs -> large stat -> p ~ 0.
+    return float(chi2_dist.sf(stat, df))
 
 
 def detection_accuracy(cover_arrs, stego_arrs, tau=0.5):

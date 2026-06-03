@@ -177,7 +177,78 @@ def attack_suite():
 
 
 # ============================================================
-# Attack application + decoding
+# Fast path: attack the 6 unique codebook images ONCE per attack
+# ============================================================
+from clip_engine.embedder import embed_images_batch  # noqa: E402
+
+
+def attacked_source_embeddings(cb, attack_fn):
+    """Apply attack_fn to each of the N unique codebook images and return their
+    (N, D) normalized CLIP embeddings — the 'received' versions of the codebook.
+
+    Because every image in any encoded sequence is one of these N images and the
+    attacks are deterministic, this is computed once and reused for all messages.
+    """
+    with tempfile.TemporaryDirectory(prefix="lgcish_src_") as td:
+        paths = []
+        for i, src in enumerate(cb["paths"]):
+            dst = os.path.join(td, f"src_{i}.png")
+            attack_fn(Image.open(src).convert("RGB")).save(dst)
+            paths.append(dst)
+        return embed_images_batch(paths)  # (N, D), normalized
+
+
+def source_lookup(source_emb, codebook_emb):
+    """For each received source image, its (pred_index, top1_margin) against the
+    clean codebook. Returns (pred[N], margin[N], top1[N])."""
+    sims = source_emb @ codebook_emb.T  # (N, N)
+    pred = np.argmax(sims, axis=1).astype(int)
+    margins, top1s = [], []
+    for row in sims:
+        order = np.sort(row)[::-1]
+        top1s.append(float(order[0]))
+        margins.append(float(order[0] - order[1]) if len(order) > 1 else float(order[0]))
+    return pred, np.array(margins), np.array(top1s)
+
+
+def evaluate_message_fast(message, cb, src_pred, src_margin, src_top1,
+                          key=None, use_compression=True):
+    """Score one message using the precomputed per-source lookup (no re-embedding).
+
+    src_pred[t]   = codebook index a received copy of image t maps to
+    src_margin[t] = its CLIP top1-top2 margin
+    """
+    n = cb["n_images"]
+    _, meta = encode(message, cb, key=key, use_compression=use_compression)
+    true_idx = meta["indices"]
+    rec_idx = [int(src_pred[t]) for t in true_idx]
+
+    n_imgs = len(true_idx)
+    symbol_errors = sum(1 for a, b in zip(true_idx, rec_idx) if a != b)
+    ser = symbol_errors / n_imgs if n_imgs else 0.0
+
+    tb = index_bits(true_idx, n)
+    rb = index_bits(rec_idx, n)
+    ber = sum(1 for a, b in zip(tb, rb) if a != b) / len(tb) if tb else 0.0
+
+    exact = (symbol_errors == 0)  # lossless chain: exact iff all indices recovered
+
+    seq_margins = [src_margin[t] for t in true_idx]
+    seq_top1 = [src_top1[t] for t in true_idx]
+    return {
+        "n_images": n_imgs,
+        "ser": ser,
+        "ber": ber,
+        "exact": exact,
+        "mean_margin": float(np.mean(seq_margins)) if seq_margins else 0.0,
+        "min_margin": float(np.min(seq_margins)) if seq_margins else 0.0,
+        "mean_top1": float(np.mean(seq_top1)) if seq_top1 else 0.0,
+        "symbol_errors": symbol_errors,
+    }
+
+
+# ============================================================
+# Attack application + decoding (slow path — arbitrary received images)
 # ============================================================
 def apply_attack_to_sequence(image_paths, attack_fn, tmp_dir):
     """Apply attack_fn to every image in the sequence, save to tmp_dir, return new paths.
