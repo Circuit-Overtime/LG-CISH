@@ -105,15 +105,15 @@ def main():
     # 4.6
     w("\n## 4.6 Ablation Study\n")
     w(r_abl["table"])
-    w(f"\nWith this maximally-separated 6-image codebook both CLIP and pHash decode "
-      f"JPEG-50 perfectly ({r_abl['clip_jpeg50']:.1f}% vs {r_abl['phash_jpeg50']:.1f}%); "
-      f"CLIP's advantage emerges under harsher geometric attacks (Section 4.8, "
-      f"{r_stat['harsh_attack']}: CLIP {r_stat['clip_harsh']:.0f}% vs pHash "
-      f"{r_stat['phash_harsh']:.0f}%). The coding ablations show clear effects: "
-      f"disabling compression inflates the sequence ({r_abl['avg_full']:.1f} → "
-      f"{r_abl['avg_nocomp']:.1f} images), fixed-chunk coding needs "
-      f"{r_abl['avg_fixed']:.1f} images vs {r_abl['avg_full']:.1f} for base-N, and "
-      f"removing CRC-32 leaves channel errors undetected.\n")
+    w(f"\nBoth CLIP and pHash decode JPEG-50 perfectly on this maximally-separated "
+      f"codebook, but under the harsher Crop-40% attack the semantic CLIP matcher "
+      f"holds at {r_abl['clip_crop40']:.0f}% while pHash collapses to "
+      f"{r_abl['phash_crop40']:.0f}% — the geometric robustness that motivates CLIP. "
+      f"The coding ablations show clear effects: disabling compression inflates the "
+      f"sequence ({r_abl['avg_full']:.1f} → {r_abl['avg_nocomp']:.1f} images), "
+      f"fixed-chunk coding needs {r_abl['avg_fixed']:.1f} images vs "
+      f"{r_abl['avg_full']:.1f} for base-N, and removing CRC-32 leaves channel "
+      f"errors undetected.\n")
 
     # 4.7
     w("\n## 4.7 Comparative Analysis\n")
