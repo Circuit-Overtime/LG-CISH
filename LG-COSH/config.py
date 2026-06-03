@@ -21,6 +21,14 @@ IMAGE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 # --- Crypto ---
 AES_KEY_SIZE = 32  # 256-bit
 
+
+def generate_demo_key() -> bytes:
+    """Deterministic 256-bit key for CLI demos so encode/decode (separate
+    invocations) share the same key. Real use should call
+    crypto.aes_layer.generate_key() and exchange the key out-of-band."""
+    import hashlib
+    return hashlib.sha256(b"LG-CISH-demo-key").digest()
+
 # --- Plausibility (Pollinations API - OpenAI compatible) ---
 LLM_BASE_URL = "https://gen.pollinations.ai"
 LLM_MODEL = "openai"  # GPT-5 Mini — fast & balanced
