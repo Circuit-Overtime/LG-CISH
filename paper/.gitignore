@@ -1,0 +1,5 @@
+# Keep only LaTeX sources and built PDFs; ignore everything else.
+*
+!.gitignore
+!*.tex
+!*.pdf

@@ -1,0 +1,47 @@
+% ===================================================================
+%  algorithms.tex — Algorithms 1-3 (self-contained pseudocode floats).
+%  Requires the \pseudo environment + \kw/\Ind/\Indd/\Cmt macros defined
+%  in main.tex's preamble. \input from main.tex.
+% ===================================================================
+
+\begin{algorithm}[t]
+\caption{Codebook construction}\label{alg:codebook}
+\begin{pseudo}
+\item \kw{Input:} image set $\mathcal{D}$, CLIP encoder $\Phi$, threshold $\tau$
+\item \kw{Output:} codebook embeddings $\mathbf{C}$, paths, $N$
+\item $E \gets [\,e(x)\ \text{for } x\in\mathcal{D}\,]$ \Cmt{Eq.~\eqref{eq:embed}, batched}
+\item $\mathcal{K}\gets\emptyset$
+\item \kw{for} $j=0$ \kw{to} $|\mathcal{D}|-1$ \kw{do}
+\item \Ind \kw{if} $\max_{i\in\mathcal{K}} s(E_i,E_j)\le\tau$ \kw{then} \Cmt{Eq.~\eqref{eq:prune}}
+\item \Indd $\mathcal{K}\gets\mathcal{K}\cup\{j\}$
+\item \Ind \kw{end if}
+\item \kw{end for}
+\item $\mathbf{C}\gets E[\mathcal{K}]$;\quad $N\gets|\mathcal{K}|$
+\item \kw{return} $\mathbf{C}$, paths$[\mathcal{K}]$, $N$
+\end{pseudo}
+\end{algorithm}
+
+\begin{algorithm}[t]
+\caption{Encode: message $\to$ image sequence}\label{alg:encode}
+\begin{pseudo}
+\item \kw{Input:} message $m$, codebook $\mathcal{C}$ ($N$ imgs), key $\kappa$ (optional)
+\item $p \gets \textsc{zlib}(\textsc{utf8}(m))$
+\item $p \gets \textsc{aes}_{\kappa}\!\big(p \,\Vert\, \textsc{crc32}(p)\big)$ \Cmt{wrap}
+\item $v \gets \textsc{int}_{\text{BE}}(\mathtt{0x01}\Vert p)$ \Cmt{Eq.~\eqref{eq:int}}
+\item $(d_0,\dots,d_{L-1}) \gets \textsc{toBaseN}(v,N)$ \Cmt{Eq.~\eqref{eq:digits}}
+\item \kw{return} $[\,c_{d_0},\dots,c_{d_{L-1}}\,]$
+\end{pseudo}
+\end{algorithm}
+
+\begin{algorithm}[t]
+\caption{Decode: image sequence $\to$ message}\label{alg:decode}
+\begin{pseudo}
+\item \kw{Input:} received images $[\tilde{x}_0,\dots,\tilde{x}_{L-1}]$, codebook $\mathbf{C}$, key $\kappa$
+\item \kw{for} $t=0$ \kw{to} $L-1$ \kw{do}
+\item \Ind $\hat d_t \gets \arg\max_j s(e(\tilde{x}_t),\mathbf{C}_j)$ \Cmt{Eq.~\eqref{eq:nn}}
+\item \kw{end for}
+\item $v \gets \sum_t \hat d_t N^{t}$;\quad $p \gets \textsc{stripSentinel}(\textsc{bytes}(v))$
+\item $p \gets \textsc{aes}^{-1}_{\kappa}(p)$;\ \ \kw{verify} CRC-32 \Cmt{reject on mismatch}
+\item \kw{return} $\textsc{utf8}^{-1}(\textsc{unzip}(p))$
+\end{pseudo}
+\end{algorithm}

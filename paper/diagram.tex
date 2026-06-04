@@ -1,0 +1,54 @@
+% ===================================================================
+%  diagram.tex — Fig. 1, the LG-CISH pipeline (TikZ). \input from main.tex.
+% ===================================================================
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  font=\footnotesize,
+  box/.style   = {rounded corners=2pt, draw=black!55, line width=0.5pt,
+                  minimum height=0.95cm, text width=2.05cm, align=center, inner sep=2pt},
+  enc/.style   = {box, fill=blue!8},
+  cod/.style   = {box, fill=green!10},
+  chan/.style  = {box, fill=red!9},
+  dec/.style   = {box, fill=yellow!16},
+  key/.style   = {rounded corners=2pt, draw=violet!55, line width=0.5pt,
+                  fill=violet!7, align=center, inner sep=4pt},
+  arr/.style   = {-{Latex[length=1.6mm]}, line width=0.6pt},
+  node distance = 0.42cm and 0.46cm
+]
+% ---- Sender pipeline (left to right) ----
+\node[enc] (m)    {Secret\\message};
+\node[enc, right=of m]    (sec)  {zlib $+$ AES-256 $+$ CRC-32};
+\node[cod, right=of sec]  (code) {Base-$N$ coding\\ $\mathrm{bytes}\!\to\!\mathbb{Z}\!\to\!\mathrm{digits}$};
+\node[cod, right=of code] (look) {Codebook lookup\\ index$\to$image};
+\node[enc, right=of look] (seq)  {Image\\sequence};
+\foreach \a/\b in {m/sec, sec/code, code/look, look/seq} \draw[arr] (\a)--(\b);
+
+% ---- Channel (right column) ----
+\node[chan, below=0.7cm of seq] (chan) {Channel\\ \scriptsize JPEG\,/\,resize\\ \scriptsize noise\,/\,crop};
+\draw[arr] (seq)--(chan);
+
+% ---- Receiver pipeline (right to left, mirrored) ----
+\node[dec, below=0.7cm of chan] (recv) {Received\\images};
+\node[cod, left=of recv]  (emb)  {CLIP embed $+$\\ NN match$\to$index};
+\node[cod, left=of emb]   (deco) {Base-$N$ decode\\ $\mathrm{digits}\!\to\!\mathbb{Z}\!\to\!\mathrm{bytes}$};
+\node[dec, left=of deco]  (uw)   {CRC verify $+$ AES $+$ unzip};
+\node[dec, left=of uw]    (out)  {Recovered\\message};
+\draw[arr] (chan)--(recv);
+\foreach \a/\b in {recv/emb, emb/deco, deco/uw, uw/out} \draw[arr] (\a)--(\b);
+
+% ---- Shared secret bar ----
+\node[key, below=0.55cm of deco, xshift=0.5cm, text width=8.4cm]
+  {Shared secret (offline): image database\, $+$\, CLIP model\, $+$\, codebook
+   ($N$ images, $\log_2 N$ bits each)};
+
+% ---- Group labels ----
+\node[anchor=west, font=\scriptsize\bfseries, blue!50!black] at ([yshift=0.42cm]m.north west) {SENDER};
+\node[anchor=west, font=\scriptsize\bfseries, yellow!40!black] at ([yshift=0.42cm]out.north west) {RECEIVER};
+\end{tikzpicture}
+\caption{LG-CISH coverless pipeline. The identity and order of \emph{unmodified}
+images carry the message; CLIP nearest-neighbour recovers the indices after
+channel distortion. Every transformation is deterministic and invertible, so the
+end-to-end channel is lossless once indices are correct.}
+\label{fig:arch}
+\end{figure}

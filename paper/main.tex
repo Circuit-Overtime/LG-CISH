@@ -1,0 +1,692 @@
+% ===================================================================
+%  LG-CISH — single-file paper. Build:  pdflatex main.tex  (run twice)
+%  Modular parts kept separate:  diagram.tex (Fig. 1),  algorithms.tex (Alg. 1-3).
+%  Figures are pulled from ../LG-COSH/evaluation/figures/ (see \graphicspath).
+%
+%  This uses the article class so it compiles with a standard TeX Live install.
+%  To target Springer, swap the \documentclass line for
+%      \documentclass[pdflatex,sn-mathphys-num]{sn-jnl}
+%  add sn-jnl.cls to this folder, and move title/abstract/keywords into the
+%  \title/\abstract/\keywords macros sn-jnl provides.
+% ===================================================================
+\documentclass[10pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc,fit,backgrounds}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{../LG-COSH/evaluation/figures/}}
+
+% --- self-contained algorithm float + pseudocode environment ---------
+\usepackage{float}
+\floatstyle{ruled}
+\newfloat{algorithm}{tbp}{loa}
+\floatname{algorithm}{Algorithm}
+\newcounter{algln}
+\newenvironment{pseudo}{%
+  \begin{list}{\footnotesize\arabic{algln}:}{%
+    \usecounter{algln}%
+    \setlength{\leftmargin}{2.2em}\setlength{\labelwidth}{1.6em}%
+    \setlength{\labelsep}{0.4em}\setlength{\itemsep}{1pt}%
+    \setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\small}%
+}{\end{list}}
+\newcommand{\kw}[1]{\textbf{#1}}
+\newcommand{\Ind}{\hspace*{1.3em}}
+\newcommand{\Indd}{\hspace*{2.6em}}
+\newcommand{\Cmt}[1]{\hfill{\footnotesize$\triangleright$\,\textit{#1}}}
+% ---------------------------------------------------------------------
+
+\title{\textbf{LG-CISH: Lossless Language-Guided Coverless Image\\
+Steganography via CLIP Semantic Hashing and Base-$N$ Positional Coding}}
+\author{Author Name\thanks{Affiliation, email. Placeholder --- fill before submission.}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Embedding-based image steganography perturbs cover pixels and is therefore
+detectable by modern statistical and CNN steganalysers. We present \textbf{LG-CISH},
+a fully \emph{lossless} \emph{coverless} scheme that hides a secret message in a
+sequence of \emph{unmodified} natural images: the identity and order of the images
+carry the data. LG-CISH combines two ideas. First, each codebook image is
+represented by a normalised CLIP embedding, so recovery is a robust semantic
+nearest-neighbour lookup that survives JPEG, resizing, noise, and aggressive
+cropping---unlike perceptual hashing. Second, base-$N$ positional coding treats
+the encrypted, integrity-protected payload as a single integer written in radix
+$N$, giving the information-theoretic $\log_2 N$ bits per image. A thin
+zlib/AES-256/CRC-32 layer adds compression, confidentiality, and tamper
+detection. On a proof-of-concept six-image DIV2K codebook, LG-CISH achieves
+bit-exact reconstruction (BER $=0$), $100\%$ accuracy across eighteen channel
+attacks (JPEG down to quality~30, noise, downscaling to $25\%$, centre-cropping to
+$70\%$), chance-level steganalysis detectability ($54.2\%$ vs.\ $87.5\%$ for LSB),
+and a statistically significant robustness advantage over pixel-domain baselines
+($p=1.6\times10^{-83}$). We analyse the capacity/undetectability trade-off and the
+database-bound capacity limit of the coverless paradigm.
+\end{abstract}
+
+\noindent\textbf{Keywords:} coverless steganography; information hiding; CLIP;
+semantic hashing; base-$N$ coding; robustness; steganalysis resistance.
+
+% -------------------------------------------------------------------
+\section{Introduction}\label{sec:intro}
+% -------------------------------------------------------------------
+Image steganography conceals a secret message inside a cover image so that its
+very existence is hidden from an observer. Classical embedding methods --- least
+significant bit (LSB) substitution~\cite{chan2004,provos2003}, discrete cosine
+transform (DCT) and discrete wavelet transform (DWT) coefficient
+modification~\cite{westfeld2001f5}, and learned auto-encoders~\cite{baluja2017,tancik2020}
+--- all perturb the cover pixels. Those perturbations, however small, leave a
+statistical fingerprint that modern convolutional steganalysers such as
+XuNet~\cite{xu2016} and SRNet~\cite{boroumand2019} can detect with high accuracy.
+
+\emph{Coverless} image steganography removes the attack surface entirely: no
+pixel is ever modified~\cite{zhou2015,coverlessSurvey2024}. Instead, the secret
+is conveyed by \emph{selecting} or \emph{generating} ordinary images whose
+intrinsic features map to the message bits. Because the transmitted images are
+statistically indistinguishable from natural images, pixel-domain steganalysis
+is reduced to random guessing. The central difficulty of the selection (mapping)
+paradigm is \emph{reliable recovery}: the receiver must map each received image
+back to the exact index the sender intended, even after the image has been
+re-compressed, resized, or noised by a real transport channel (e.g.\ a messaging
+platform). Robust hashing~\cite{zhou2015,end2endHash2023} and hand-crafted
+features such as SURF~\cite{surf2024} have been used for this mapping, but they
+remain sensitive to geometric distortion.
+
+We propose \textbf{LG-CISH} (Language-Guided Coverless Image Steganography via
+Hashing), a fully \emph{lossless} coverless scheme built on two ideas:
+\begin{enumerate}
+  \item \textbf{Semantic hashing with a vision--language model.} Each codebook
+        image is represented by a normalised CLIP~\cite{radford2021} embedding.
+        Recovery is a nearest-neighbour lookup in this semantic space. Unlike a
+        perceptual hash, the CLIP embedding encodes \emph{visual meaning}, so it
+        survives JPEG, resizing, noise, and aggressive cropping (Section~\ref{sec:results}).
+  \item \textbf{Base-$N$ positional coding.} With a codebook of $N$ images we
+        treat the encrypted, integrity-protected payload as a single integer and
+        write it in radix $N$. Every image then carries $\log_2 N$ bits through
+        its \emph{identity and position} in the sequence --- the sequence
+        \emph{is} the message. The coding is deterministic and bijective, so the
+        end-to-end channel is lossless (bit error rate $=0$) whenever the indices
+        are recovered correctly.
+\end{enumerate}
+A thin cryptographic layer (zlib compression, AES-256-CBC encryption, and a
+CRC-32 integrity tag) wraps the payload, giving confidentiality and tamper
+detection on top of the steganographic channel.
+
+\paragraph{Contributions.}
+(i) A lossless coverless pipeline that combines CLIP semantic hashing with
+base-$N$ positional coding, raising the per-image capacity from the
+$\lfloor\log_2 N\rfloor$ bits of fixed-chunk coding to the information-theoretic
+$\log_2 N$ bits (Section~\ref{sec:method}).
+(ii) A reproducible evaluation suite reporting reconstruction accuracy, bit error
+rate, robustness to eight attack families, statistical steganalysis resistance,
+an ablation isolating each component, a baseline comparison, and statistical
+significance tests (Section~\ref{sec:results}).
+(iii) An honest analysis of the capacity/undetectability trade-off and of the
+database-bound capacity limit inherent to coverless selection
+(Section~\ref{sec:discussion}).
+
+% -------------------------------------------------------------------
+\section{Related Work}\label{sec:related}
+% -------------------------------------------------------------------
+\paragraph{Embedding-based steganography.}
+LSB substitution hides bits in the least significant bit-planes of the cover and
+offers very high capacity at the cost of detectability~\cite{chan2004}. Transform
+-domain methods (JSteg, F5~\cite{westfeld2001f5}, and DWT--DCT hybrids) embed in
+frequency coefficients for better robustness to compression, and deep methods
+hide one image inside another~\cite{baluja2017} or embed decodable hyperlinks
+that survive printing~\cite{tancik2020}. All of them modify the cover and are
+therefore vulnerable, in principle, to statistical~\cite{westfeld1999,fridrich2001}
+and CNN-based~\cite{xu2016,boroumand2019} steganalysis.
+
+\paragraph{Coverless steganography.}
+Zhou et al.~\cite{zhou2015} introduced coverless image steganography, indexing a
+database by robust hashes and selecting images whose hash equals a message
+segment. Subsequent work improved robustness through better dataset
+construction~\cite{neglected2022}, end-to-end learned hash
+generation~\cite{end2endHash2023}, SURF-based retrieval~\cite{surf2024}, and
+image-restoration front-ends~\cite{restoration2024}. A second, \emph{generative}
+branch synthesises stego images from the secret using GANs or diffusion
+models~\cite{imageMapping2024,diffstega2024}. Recent surveys catalogue the rapid
+growth of both branches and identify robustness and capacity as the key open
+problems~\cite{coverlessSurvey2024,dlSurvey2024}. LG-CISH belongs to the
+selection/mapping branch but replaces robust \emph{perceptual} hashing with
+\emph{semantic} CLIP hashing and adds base-$N$ positional coding for capacity.
+
+\paragraph{Vision--language embeddings.}
+CLIP~\cite{radford2021} jointly trains an image and a text encoder on 400M
+image--text pairs with a contrastive objective, yielding a shared embedding space
+that is robust to distribution shift. We exploit only its image encoder, using
+the normalised embedding as a robust semantic fingerprint --- a use complementary
+to its common role in retrieval and zero-shot classification.
+
+% -------------------------------------------------------------------
+\section{Proposed Method: LG-CISH}\label{sec:method}
+% -------------------------------------------------------------------
+\subsection{Overview}
+Sender and receiver share three artefacts established once, offline: an image
+database, a CLIP model, and the resulting \emph{codebook}. The codebook assigns a
+unique index $0,\dots,N-1$ to each of $N$ mutually distinct images. Encoding maps
+the secret message to an ordered sequence of codebook images; the images are
+transmitted unmodified over an arbitrary channel; decoding recovers each image's
+index by CLIP nearest-neighbour search and inverts the coding.
+Fig.~\ref{fig:arch} shows the full pipeline.
+
+\input{diagram}      % Fig. 1 (TikZ pipeline)
+
+\subsection{Codebook construction}\label{sec:codebook}
+Let $\Phi:\mathcal{X}\!\to\!\mathbb{R}^{d}$ be the CLIP image encoder
+($d{=}512$ for ViT-B/32). For image $x$ we use the $\ell_2$-normalised embedding
+\begin{equation}
+  e(x)=\frac{\Phi(x)}{\lVert\Phi(x)\rVert_2}, \qquad \lVert e(x)\rVert_2=1 .
+  \label{eq:embed}
+\end{equation}
+Similarity between two normalised embeddings is the cosine (inner) product
+\begin{equation}
+  s(a,b)=\langle a,b\rangle=a^{\!\top}b\in[-1,1].
+  \label{eq:cos}
+\end{equation}
+To guarantee unambiguous recovery the codebook must be \emph{separated}: starting
+from candidate embeddings $\{e_1,\dots,e_M\}$ we greedily keep image $j$ only if
+it is not too similar to an already-kept image,
+\begin{equation}
+  \text{keep } j \iff \max_{i<j,\ i\in\mathcal{K}} s(e_i,e_j)\le\tau ,
+  \label{eq:prune}
+\end{equation}
+with threshold $\tau$ (we use $\tau{=}0.85$). The surviving $N{=}|\mathcal{K}|$
+images form the codebook $\mathcal{C}=\{c_0,\dots,c_{N-1}\}$ with embedding matrix
+$\mathbf{C}\in\mathbb{R}^{N\times d}$ (Algorithm~\ref{alg:codebook}).
+
+\input{algorithms}   % Algorithms 1-3 (codebook / encode / decode)
+
+\subsection{Base-$N$ positional coding}\label{sec:basen}
+A codebook of $N$ images is a radix-$N$ alphabet, so the information-theoretic
+capacity is
+\begin{equation}
+  C=\log_2 N \ \ \text{bits/image}.
+  \label{eq:cap}
+\end{equation}
+For $N{=}6$, $C\approx2.585$ bits/image, strictly more than the
+$\lfloor\log_2 N\rfloor=2$ bits of fixed-chunk coding. Given a payload byte string
+$p$ we form a non-negative integer with a sentinel byte $\mathtt{0x01}$ prepended
+to preserve leading zeros,
+\begin{equation}
+  v=\textsc{int}_{\text{BE}}\!\left(\mathtt{0x01}\,\Vert\,p\right),
+  \label{eq:int}
+\end{equation}
+and write $v$ in radix $N$,
+\begin{equation}
+  v=\sum_{k=0}^{L-1} d_k\,N^{k},\qquad d_k\in\{0,\dots,N-1\},
+  \label{eq:digits}
+\end{equation}
+where the most-significant digit is non-zero and the sequence length is
+\begin{equation}
+  L=\big\lfloor \log_N v\big\rfloor+1=\Big\lceil \tfrac{8\,|p|+1}{\log_2 N}\Big\rceil .
+  \label{eq:len}
+\end{equation}
+Digit $d_k$ selects codebook image $c_{d_k}$. The map
+$p\!\leftrightarrow\!(d_0,\dots,d_{L-1})$ is bijective, hence \emph{lossless}.
+
+\subsection{Encoding and decoding}
+Encoding (Algorithm~\ref{alg:encode}) compresses, encrypts, and integrity-tags
+the message, applies base-$N$ coding, and emits the ordered image list. Decoding
+(Algorithm~\ref{alg:decode}) embeds each received image and recovers its index by
+nearest neighbour,
+\begin{equation}
+  \hat{\imath}_t=\arg\max_{0\le j<N}\ s\big(e(\tilde{x}_t),\,c_j\big),
+  \label{eq:nn}
+\end{equation}
+where $\tilde{x}_t$ is the (possibly distorted) $t$-th received image. The
+reliability of \eqref{eq:nn} is quantified by the per-image \emph{decoding margin}
+\begin{equation}
+  \gamma_t=s_{(1)}-s_{(2)},
+  \label{eq:margin}
+\end{equation}
+the gap between the top-1 and top-2 cosine similarities; $\gamma_t>0$ means the
+correct image wins. After recovering $(\hat d_0,\dots,\hat d_{L-1})$ the integer
+$v$ is reassembled with~\eqref{eq:digits}, the sentinel stripped to obtain $p$,
+the CRC-32 verified, and AES/zlib inverted.
+
+\subsection{Security model}
+The system is keyed at two levels. The database and codebook act as a shared
+secret: without them an adversary cannot map images to indices. Optionally,
+AES-256-CBC encrypts the payload so that even a holder of the codebook learns
+nothing. The combined keyspace is
+\begin{equation}
+  K = N!\,\cdot\,2^{256},
+  \label{eq:keyspace}
+\end{equation}
+the $N!$ codebook orderings times the AES-256 key space. The CRC-32 tag detects
+channel tampering and incorrect keys with probability $\approx 1-2^{-32}$.
+
+% -------------------------------------------------------------------
+\section{Experimental Results and Performance Evaluation}\label{sec:results}
+% -------------------------------------------------------------------
+All experiments use a proof-of-concept codebook of $N{=}6$ visually distinct
+DIV2K~\cite{div2k2017} images ($\log_2 6\approx2.585$ bits/image). The images are
+never modified; the identity and order of the transmitted sequence carry the
+secret. The full suite is reproducible via a single
+script.\footnote{\texttt{python evaluation/generate\_all.py}}
+
+\subsection{Experimental setup}
+Table~\ref{tab:setup} lists the configuration. The six codebook images are
+mutually well separated in CLIP space (maximum pairwise similarity $0.609$,
+separation margin $1-0.609=0.391$), which is what makes nearest-neighbour
+recovery~\eqref{eq:nn} reliable. CLIP ViT-B/32 runs on an RTX~3050 (6\,GB).
+
+\begin{table}[t]
+\centering
+\caption{Experimental configuration.}\label{tab:setup}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Parameter & Value \\
+\midrule
+Dataset & DIV2K (curated subset)~\cite{div2k2017} \\
+Codebook images $N$ & 6 \\
+Capacity & 2.585 bits/image (base-6) \\
+Semantic encoder & CLIP ViT-B/32, $d{=}512$~\cite{radford2021} \\
+Separation threshold $\tau$ & 0.85 \\
+Pairwise sim. (min/mean/max) & 0.353 / 0.497 / 0.609 \\
+Separation margin ($1{-}\max$) & 0.391 \\
+Encryption / integrity & AES-256-CBC / CRC-32 \\
+Compression & zlib \\
+Hardware & RTX 3050 6\,GB, 16-core CPU \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Qualitative results}
+Fig.~\ref{fig:set1} shows three messages encoded into image sequences;
+Fig.~\ref{fig:set2} shows a sequence decoded back to an exact match. The mapping
+modifies no pixels. Fig.~\ref{fig:fail} is the failure analysis: decoding stays
+perfect through JPEG~2\%, Crop~30\%, and Resize~10\%, and only collapses under
+extreme cropping (Crop~15\%, symbol error rate $16.6\%$). A codebook mismatch is
+\emph{always} caught by the CRC-32 layer rather than silently mis-decoded.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_4_2_set1_encode.png}
+\caption{Secret message $\to$ generated image sequence (short/medium/long). The
+identity and order of unmodified images encode the data.}
+\label{fig:set1}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_4_2_set2_decode.png}
+\caption{Received sequence $\to$ CLIP nearest-neighbour decode. Original and
+reconstructed messages match exactly.}
+\label{fig:set2}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_4_2_set3_failures.png}
+\caption{Failure cases. Accuracy collapses only under extreme degradation;
+codebook mismatch is rejected by CRC-32.}
+\label{fig:fail}
+\end{figure}
+
+\subsection{Quantitative evaluation}
+Table~\ref{tab:recon} reports reconstruction accuracy over 120 random messages in
+three length buckets: every message is reconstructed bit-exactly
+(BER $=0$, hash-match $100\%$) on a clean channel. Table~\ref{tab:capacity}
+contrasts capacity and distortion: LSB and DCT offer far higher raw capacity but
+modify pixels, whereas LG-CISH has infinite PSNR (no modification) at
+$2.585$ bits/image. Table~\ref{tab:timing} reports timing; encoding is sub-%
+millisecond and the cost is dominated by CLIP embedding at decode
+($\approx 31$\,ms/image on the GPU, including image I/O). CLIP top-1 retrieval
+precision/recall on the codebook is $100\%$.
+
+\begin{table}[t]
+\centering
+\caption{Reconstruction accuracy by message length (clean channel, 40 messages each).}\label{tab:recon}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Message length & Msgs & Accuracy (\%) & BER & Hash match (\%) \\
+\midrule
+Short ($\le$50 chars) & 40 & 100.00 & $0$ & 100.00 \\
+Medium (50--200)      & 40 & 100.00 & $0$ & 100.00 \\
+Long (200--1000)      & 40 & 100.00 & $0$ & 100.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Payload capacity vs.\ distortion. LG-CISH trades raw capacity for zero distortion.}\label{tab:capacity}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Method & Capacity & Pixel distortion & PSNR (dB) \\
+\midrule
+LSB~\cite{chan2004}        & $\approx$3 bits/pixel   & Yes (high)     & 51.1 \\
+DCT-LSB~\cite{westfeld2001f5} & $\approx$0.016 bits/pixel & Yes (moderate) & 38--42 \\
+DWT--DCT~\cite{westfeld2001f5} & $\approx$0.015 bits/pixel & Yes (low)      & 40--44 \\
+\textbf{Proposed LG-CISH}  & 2.585 bits/image        & \textbf{None (coverless)} & $\infty$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Computational time (mean over repeated runs, RTX 3050).}\label{tab:timing}
+\begin{tabular}{@{}lc@{}}
+\toprule
+Stage & Time (ms) \\
+\midrule
+Full encode (200-char message) & 0.09 \\
+CLIP embedding (per image)     & 34.6 \\
+Decode (per image, amortised)  & 31.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Robustness analysis}
+Table~\ref{tab:robust} simulates real transport channels. Reconstruction remains
+$100\%$ (BER $=0$) across all eighteen tested conditions --- JPEG down to quality
+30, Gaussian noise up to $\sigma{=}30$, salt-and-pepper up to density $0.10$,
+downscaling to $25\%$, centre-cropping to $70\%$, and PNG$\to$WebP conversion.
+The decoding margin~\eqref{eq:margin} stays comfortably positive throughout
+(from $0.422$ at baseline to $0.356$ under Crop~70\%), confirming a wide safety
+band. This robustness is the direct benefit of \emph{semantic} rather than
+pixel-level hashing.
+
+\begin{table}[t]
+\centering
+\caption{Robustness to channel attacks (40 messages/attack). Accuracy is exact-match reconstruction.}\label{tab:robust}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Attack & Accuracy (\%) & BER & CLIP margin \\
+\midrule
+No attack (baseline) & 100.00 & $0$ & 0.422 \\
+JPEG 70\%            & 100.00 & $0$ & 0.419 \\
+JPEG 50\%            & 100.00 & $0$ & 0.417 \\
+JPEG 30\%            & 100.00 & $0$ & 0.412 \\
+Gaussian $\sigma{=}20$ & 100.00 & $0$ & 0.410 \\
+Gaussian $\sigma{=}30$ & 100.00 & $0$ & 0.402 \\
+Salt \& Pepper 0.10  & 100.00 & $0$ & 0.407 \\
+Resize 25\%          & 100.00 & $0$ & 0.408 \\
+Crop 80\%            & 100.00 & $0$ & 0.379 \\
+Crop 70\%            & 100.00 & $0$ & 0.356 \\
+PNG$\to$WebP 80      & 100.00 & $0$ & 0.419 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Security and steganalysis resistance}
+Table~\ref{tab:steg} reports a chi-square statistical steganalyser~\cite{westfeld1999}
+applied to natural cover images, LSB-stego, DCT-stego, and LG-CISH ``stego''. As
+LG-CISH transmits \emph{unmodified} natural images, its detection accuracy is
+$54.2\%$ --- essentially chance, with a true-positive rate of only $8.3\%$ ---
+whereas LSB is detected at $87.5\%$. Because the proposed stego images are
+bit-identical to natural images, undetectability holds by construction against
+any pixel-domain detector, including CNN steganalysers such as
+SRNet~\cite{boroumand2019} and XuNet~\cite{xu2016}. The combined
+keyspace~\eqref{eq:keyspace} is $6!\cdot2^{256}\approx2^{265.5}$, and the CRC-32
+tag catches $100\%$ of injected bit-flips in our tamper test ($500$ trials).
+
+\begin{table}[t]
+\centering
+\caption{Chi-square steganalysis detection. $\approx$50\% = indistinguishable from guessing.}\label{tab:steg}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Method & Detection acc.\ (\%) & TPR (\%) & TNR (\%) \\
+\midrule
+LSB              & 87.5 & 75.0 & 100.0 \\
+DCT-LSB          & 58.3 & 16.7 & 100.0 \\
+\textbf{Proposed LG-CISH} & \textbf{54.2} & \textbf{8.3} & 100.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ablation study}
+Table~\ref{tab:ablation} removes one component at a time. On this maximally
+separated codebook both CLIP and the pHash baseline decode JPEG-50 perfectly, but
+under the harsher Crop-40\% attack the semantic CLIP matcher holds at $100\%$
+while pHash collapses to $0\%$ --- the geometric robustness that motivates CLIP.
+The coding ablations show clear effects on efficiency: disabling compression
+inflates the sequence from $276.5$ to $374.5$ images, and fixed-chunk
+($\lfloor\log_2 N\rfloor{=}2$-bit) coding needs $356.5$ images versus $276.5$ for
+base-$N$. Removing CRC-32 leaves channel errors undetected.
+
+\begin{table}[t]
+\centering
+\caption{Ablation. Crop-40\% exposes CLIP's geometric robustness; coding choices affect image count.}\label{tab:ablation}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Variant & Clean (\%) & JPEG50 (\%) & Crop40 (\%) & Avg.\ images \\
+\midrule
+Full LG-CISH (proposed)   & 100 & 100 & \textbf{100} & 276.5 \\
+Without CLIP (pHash)      & 100 & 100 & \textbf{0}   & 276.5 \\
+Without compression       & 100 & 100 & 100 & 374.5 \\
+Without CRC (no integrity)& 100 & 100 & 100 & 276.5 \\
+Fixed-chunk (2-bit)       & 100 & 100 & 100 & 356.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Comparative analysis}
+Table~\ref{tab:compare} places LG-CISH against classical and coverless baselines.
+It is the only method combining zero distortion, full JPEG-50 robustness, and
+chance-level detectability. Fig.~\ref{fig:robcurve} plots decoding accuracy versus
+JPEG quality: LG-CISH stays at $100\%$ while LSB collapses toward $50\%$ (random
+bits) and DCT-LSB degrades steadily. Fig.~\ref{fig:paycurve} shows reconstruction
+remains lossless as the payload (and thus sequence length) grows, and
+Fig.~\ref{fig:detbar} compares measured detection rates.
+
+\begin{table}[t]
+\centering
+\caption{Comparison with classical and coverless baselines. Bracketed values are cited from the literature.}\label{tab:compare}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Method & Capacity & JPEG50 acc.\ (\%) & Detection (\%) & PSNR (dB) \\
+\midrule
+LSB~\cite{chan2004}            & 786{,}432 bits & 49.5 & 88 & 51.1 \\
+DCT-LSB~\cite{westfeld2001f5}  & $\sim$4096 bits & 44.6 & [70--90]~\cite{boroumand2019} & 38--42 \\
+DWT--DCT~\cite{westfeld2001f5} & $\sim$4096 bits & [85] & [60--80] & 40--44 \\
+Coverless~\cite{zhou2015}      & low & [95] & [$\sim$50] & $\infty$ \\
+\textbf{Proposed LG-CISH}      & 2.585 bits/img & \textbf{100.0} & \textbf{54} & $\infty$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\linewidth]{fig_4_7_robustness_jpeg.png}
+\caption{Decoding accuracy vs.\ JPEG quality. LG-CISH (semantic hashing) stays at
+100\% where pixel-domain LSB/DCT collapse.}
+\label{fig:robcurve}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\linewidth]{fig_4_7_accuracy_payload.png}
+\caption{Reconstruction accuracy vs.\ payload length. Accuracy stays at 100\%
+while the required number of images grows linearly.}
+\label{fig:paycurve}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.7\linewidth]{fig_4_7_detection.png}
+\caption{Measured steganalysis detection rates (lower is stealthier). LG-CISH sits
+at the 50\% chance line.}
+\label{fig:detbar}
+\end{figure}
+
+\subsection{Statistical validation}
+Over $N{=}50$ independent trials (Table~\ref{tab:stats}) reconstruction accuracy
+is $100.00\pm0.00\%$ and BER is $0$, with a stable CLIP margin
+$0.4223\pm0.0016$. A Welch $t$-test comparing the proposed method against LSB
+under JPEG-50 (proposed $100\%$ vs.\ LSB $50.25\pm1.06\%$ bit accuracy) gives
+$t{=}327.7$, $p{=}1.59\times10^{-83}$ --- a statistically significant difference
+($p<0.05$). Under the harsher Crop-40\% attack CLIP retains $100\%$ versus pHash
+$0\%$. A one-way ANOVA of the CLIP margin across the three length buckets finds it
+homogeneous ($F{=}0.29$, $p{=}0.75$), i.e.\ message length does not affect
+recovery reliability.
+
+\begin{table}[t]
+\centering
+\caption{Mean $\pm$ std and 95\% confidence intervals over $N{=}50$ trials (clean channel).}\label{tab:stats}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Metric & Mean $\pm$ Std & 95\% CI \\
+\midrule
+Reconstruction accuracy (\%) & $100.00\pm0.00$ & $[100.00,100.00]$ \\
+Bit error rate               & $0\pm0$         & $[0,0]$ \\
+CLIP margin                  & $0.4223\pm0.0016$ & $[0.4218,0.4227]$ \\
+Images per message           & $372.3\pm91.5$  & $[346.1,398.6]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% -------------------------------------------------------------------
+\section{Discussion and Limitations}\label{sec:discussion}
+% -------------------------------------------------------------------
+\paragraph{Capacity is database-bound.}
+Capacity scales as $\log_2 N$ (Eq.~\eqref{eq:cap}); the $N{=}6$ proof of concept
+therefore needs many images per message (Table~\ref{tab:recon}). Practical
+deployments would use $N{=}10^3$--$10^4$ images for $10$--$13$ bits/image. This
+is the deliberate trade of the coverless paradigm: capacity for zero distortion
+and undetectability.
+
+\paragraph{The database is the key.}
+Security rests on the secrecy of the shared database and codebook
+(Eq.~\eqref{eq:keyspace}); both parties must hold an identical, versioned database
+and the same CLIP model, since model updates change embeddings.
+
+\paragraph{Channel threshold.}
+CLIP is robust but not invincible: beyond a degradation threshold (Crop~15\% in
+Fig.~\ref{fig:fail}) the nearest neighbour can flip and decoding fails --- but the
+CRC-32 tag converts such failures into detected errors rather than silent
+corruption, enabling retransmission.
+
+\paragraph{Steganalysis scope.}
+Our detector is a classical statistical attack; because the stego images are
+unmodified, undetectability against learned detectors holds by construction, but a
+dedicated study against SRNet/XuNet trained end-to-end is left as future work,
+alongside an optional LLM plausibility filter to make the \emph{ordering} of the
+sequence look like a natural photo album.
+
+% -------------------------------------------------------------------
+\section{Conclusion}\label{sec:conclusion}
+% -------------------------------------------------------------------
+LG-CISH is a lossless coverless image-steganography scheme that pairs CLIP
+semantic hashing with base-$N$ positional coding. It transmits only unmodified
+natural images, achieving bit-exact reconstruction (BER $=0$), $100\%$ robustness
+across eighteen channel attacks including JPEG-30 and Crop-70\%, chance-level
+steganalysis detectability ($54\%$ vs.\ $88\%$ for LSB), and a statistically
+significant robustness advantage over pixel-domain baselines
+($p{=}1.6\times10^{-83}$). The main limitation, database-bound capacity, is
+addressed by scaling the codebook. Future work will scale $N$, add the LLM
+plausibility filter and a permutation side-channel, and benchmark against
+end-to-end CNN steganalysis.
+
+% -------------------------------------------------------------------
+%  References.  NOTE: entries marked %VERIFY have title/venue/DOI confirmed
+%  via search but author initials/pages should be double-checked before submission.
+% -------------------------------------------------------------------
+\begin{thebibliography}{99}
+
+\bibitem{radford2021}
+A. Radford, J. W. Kim, C. Hallacy, et al.,
+``Learning transferable visual models from natural language supervision,''
+in \emph{Proc. 38th Int. Conf. Machine Learning (ICML)}, PMLR 139, pp.~8748--8763, 2021.
+
+\bibitem{zhou2015}
+Z. Zhou, H. Sun, R. Harit, X. Chen, and X. Sun,
+``Coverless image steganography without embedding,''
+in \emph{Int. Conf. Cloud Computing and Security (ICCCS)}, LNCS 9483, pp.~123--132, 2015.
+
+\bibitem{westfeld1999}
+A. Westfeld and A. Pfitzmann,
+``Attacks on steganographic systems,''
+in \emph{Information Hiding (IH 1999)}, LNCS 1768, pp.~61--76, 2000.
+
+\bibitem{boroumand2019}
+M. Boroumand, M. Chen, and J. Fridrich,
+``Deep residual network for steganalysis of digital images,''
+\emph{IEEE Trans. Information Forensics and Security}, vol.~14, no.~5, pp.~1181--1193, 2019.
+
+\bibitem{xu2016}
+G. Xu, H.-Z. Wu, and Y.-Q. Shi,
+``Structural design of convolutional neural networks for steganalysis,''
+\emph{IEEE Signal Processing Letters}, vol.~23, no.~5, pp.~708--712, 2016.
+
+\bibitem{div2k2017}
+E. Agustsson and R. Timofte,
+``NTIRE 2017 challenge on single image super-resolution: Dataset and study,''
+in \emph{Proc. IEEE Conf. Computer Vision and Pattern Recognition Workshops (CVPRW)}, pp.~126--135, 2017.
+
+\bibitem{chan2004}
+C.-K. Chan and L. M. Cheng,
+``Hiding data in images by simple LSB substitution,''
+\emph{Pattern Recognition}, vol.~37, no.~3, pp.~469--474, 2004.
+
+\bibitem{provos2003}
+N. Provos and P. Honeyman,
+``Hide and seek: An introduction to steganography,''
+\emph{IEEE Security \& Privacy}, vol.~1, no.~3, pp.~32--44, 2003.
+
+\bibitem{fridrich2001}
+J. Fridrich, M. Goljan, and R. Du,
+``Detecting LSB steganography in color and gray-scale images,''
+\emph{IEEE MultiMedia}, vol.~8, no.~4, pp.~22--28, 2001.
+
+\bibitem{westfeld2001f5}
+A. Westfeld,
+``F5---a steganographic algorithm,''
+in \emph{Information Hiding (IH 2001)}, LNCS 2137, pp.~289--302, 2001.
+
+\bibitem{baluja2017}
+S. Baluja,
+``Hiding images in plain sight: Deep steganography,''
+in \emph{Advances in Neural Information Processing Systems (NeurIPS)}, pp.~2069--2079, 2017.
+
+\bibitem{tancik2020}
+M. Tancik, B. Mildenhall, and R. Ng,
+``StegaStamp: Invisible hyperlinks in physical photographs,''
+in \emph{Proc. IEEE/CVF Conf. Computer Vision and Pattern Recognition (CVPR)}, pp.~2117--2126, 2020.
+
+\bibitem{coverlessSurvey2024} %VERIFY authors
+``Advancements and challenges in coverless image steganography: A survey,''
+\emph{Signal Processing}, Elsevier, 2024. doi:10.1016/j.sigpro.2024.109761.
+
+\bibitem{dlSurvey2024} %VERIFY authors
+``A survey on deep-learning-based image steganography,''
+\emph{Expert Systems with Applications}, Elsevier, 2024. doi:10.1016/j.eswa.2024.124390.
+
+\bibitem{neglected2022} %VERIFY authors, pages
+``Robust coverless image steganography based on neglected coverless image dataset construction,''
+\emph{IEEE Trans. Multimedia}, 2022. doi:10.1109/TMM.2022.3194990.
+
+\bibitem{end2endHash2023} %VERIFY authors, pages
+``A robust coverless image steganography based on an end-to-end hash generation model,''
+\emph{IEEE Trans. Circuits and Systems for Video Technology}, 2023. doi:10.1109/TCSVT.2023.3234548.
+
+\bibitem{surf2024} %VERIFY authors, pages
+Li et al.,
+``A robust coverless image steganography algorithm based on image retrieval with SURF features,''
+\emph{Security and Communication Networks}, Wiley/Hindawi, 2024. doi:10.1155/2024/5034640.
+
+\bibitem{restoration2024} %VERIFY authors, pages
+``A universal framework for improving the robustness of coverless image steganography based on image restoration,''
+\emph{IEEE Trans. Circuits and Systems for Video Technology}, 2024. doi:10.1109/TCSVT.2024.3454457.
+
+\bibitem{imageMapping2024} %VERIFY authors, pages
+``Robust generative steganography based on image mapping,''
+\emph{IEEE Trans. Circuits and Systems for Video Technology}, 2024. doi:10.1109/TCSVT.2024.3451620.
+
+\bibitem{diffstega2024}
+Y. Yang et al.,
+``DiffStega: Towards universal training-free coverless image steganography with diffusion models,''
+\emph{arXiv preprint} arXiv:2407.10459, 2024.
+
+\end{thebibliography}
+
+\end{document}
