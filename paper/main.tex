@@ -274,6 +274,19 @@ never modified; the identity and order of the transmitted sequence carry the
 secret. The full suite is reproducible via a single
 script.\footnote{\texttt{python evaluation/generate\_all.py}}
 
+\paragraph{Metrics.} For a message encoded into $L$ images with intended digits
+$d_t$ and recovered digits $\hat d_t$, and $B$ payload bits $p_b/\hat p_b$, the
+symbol (hash-matching) error rate and bit error rate are
+\begin{equation}
+  \mathrm{SER}=\frac{1}{L}\sum_{t=1}^{L}\mathbb{1}\!\left[\hat d_t\neq d_t\right],
+  \qquad
+  \mathrm{BER}=\frac{1}{B}\sum_{b=1}^{B}\mathbb{1}\!\left[\hat p_b\neq p_b\right],
+  \label{eq:ber}
+\end{equation}
+hash-matching accuracy is $1-\mathrm{SER}$, and reconstruction is \emph{exact}
+iff $\mathrm{SER}=0$ (which, by the bijectivity of Eq.~\eqref{eq:digits}, implies
+$\mathrm{BER}=0$).
+
 \subsection{Experimental setup}
 Table~\ref{tab:setup} lists the configuration. The six codebook images are
 mutually well separated in CLIP space (maximum pairwise similarity $0.609$,
@@ -387,6 +400,21 @@ Decode (per image, amortised)  & 31.1 \\
 \end{tabular}
 \end{table}
 
+\begin{table}[t]
+\centering
+\caption{CLIP nearest-neighbour recovery reliability (Eq.~\eqref{eq:nn}--\eqref{eq:margin}).}\label{tab:retrieval}
+\begin{tabular}{@{}lc@{}}
+\toprule
+Metric & Value \\
+\midrule
+Top-1 retrieval precision & $100\%$ \\
+Top-1 retrieval recall    & $100\%$ \\
+Mean decoding margin $\bar\gamma$ (clean) & 0.422 \\
+Worst-case margin (Crop-70\%) & 0.356 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Robustness analysis}
 Table~\ref{tab:robust} simulates real transport channels. Reconstruction remains
 $100\%$ (BER $=0$) across all eighteen tested conditions --- JPEG down to quality
@@ -399,37 +427,55 @@ pixel-level hashing.
 
 \begin{table}[t]
 \centering
-\caption{Robustness to channel attacks (40 messages/attack). Accuracy is exact-match reconstruction.}\label{tab:robust}
+\caption{Robustness to all eighteen channel attacks (40 messages/attack). Accuracy is exact-match reconstruction.}\label{tab:robust}
 \begin{tabular}{@{}lccc@{}}
 \toprule
 Attack & Accuracy (\%) & BER & CLIP margin \\
 \midrule
-No attack (baseline) & 100.00 & $0$ & 0.422 \\
-JPEG 70\%            & 100.00 & $0$ & 0.419 \\
-JPEG 50\%            & 100.00 & $0$ & 0.417 \\
-JPEG 30\%            & 100.00 & $0$ & 0.412 \\
+No attack (baseline)   & 100.00 & $0$ & 0.422 \\
+JPEG 90\%              & 100.00 & $0$ & 0.421 \\
+JPEG 70\%              & 100.00 & $0$ & 0.419 \\
+JPEG 50\%              & 100.00 & $0$ & 0.417 \\
+JPEG 30\%              & 100.00 & $0$ & 0.412 \\
+Gaussian $\sigma{=}5$  & 100.00 & $0$ & 0.423 \\
+Gaussian $\sigma{=}10$ & 100.00 & $0$ & 0.420 \\
 Gaussian $\sigma{=}20$ & 100.00 & $0$ & 0.410 \\
 Gaussian $\sigma{=}30$ & 100.00 & $0$ & 0.402 \\
-Salt \& Pepper 0.10  & 100.00 & $0$ & 0.407 \\
-Resize 25\%          & 100.00 & $0$ & 0.408 \\
-Crop 80\%            & 100.00 & $0$ & 0.379 \\
-Crop 70\%            & 100.00 & $0$ & 0.356 \\
-PNG$\to$WebP 80      & 100.00 & $0$ & 0.419 \\
+Salt \& Pepper 0.01    & 100.00 & $0$ & 0.423 \\
+Salt \& Pepper 0.05    & 100.00 & $0$ & 0.416 \\
+Salt \& Pepper 0.10    & 100.00 & $0$ & 0.407 \\
+Resize 50\%            & 100.00 & $0$ & 0.417 \\
+Resize 25\%            & 100.00 & $0$ & 0.408 \\
+Crop 90\%              & 100.00 & $0$ & 0.400 \\
+Crop 80\%              & 100.00 & $0$ & 0.379 \\
+Crop 70\%              & 100.00 & $0$ & 0.356 \\
+PNG$\to$WebP 80        & 100.00 & $0$ & 0.419 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Security and steganalysis resistance}
 Table~\ref{tab:steg} reports a chi-square statistical steganalyser~\cite{westfeld1999}
-applied to natural cover images, LSB-stego, DCT-stego, and LG-CISH ``stego''. As
-LG-CISH transmits \emph{unmodified} natural images, its detection accuracy is
-$54.2\%$ --- essentially chance, with a true-positive rate of only $8.3\%$ ---
-whereas LSB is detected at $87.5\%$. Because the proposed stego images are
-bit-identical to natural images, undetectability holds by construction against
-any pixel-domain detector, including CNN steganalysers such as
-SRNet~\cite{boroumand2019} and XuNet~\cite{xu2016}. The combined
-keyspace~\eqref{eq:keyspace} is $6!\cdot2^{256}\approx2^{265.5}$, and the CRC-32
-tag catches $100\%$ of injected bit-flips in our tamper test ($500$ trials).
+applied to natural cover images, LSB-stego, DCT-stego, and LG-CISH ``stego''. The
+detector forms intensity-histogram pairs $(2k,2k{+}1)$ with expected value
+$\bar h_k=(h_{2k}+h_{2k+1})/2$ and evaluates
+\begin{equation}
+  \chi^2=\sum_{k}\frac{\left(h_{2k}-\bar h_k\right)^2}{\bar h_k},
+  \qquad
+  P_{\mathrm{emb}}=1-F_{\chi^2}\!\left(\chi^2;\,\nu\right),
+  \label{eq:chi2}
+\end{equation}
+where $F_{\chi^2}(\cdot;\nu)$ is the chi-square CDF with $\nu$ degrees of freedom;
+LSB embedding equalises the pairs, driving $\chi^2\!\to\!0$ and
+$P_{\mathrm{emb}}\!\to\!1$. As LG-CISH transmits \emph{unmodified} natural images,
+its detection accuracy is $54.2\%$ --- essentially chance, with a true-positive
+rate of only $8.3\%$ --- whereas LSB is detected at $87.5\%$. Because the proposed
+stego images are bit-identical to natural images, undetectability holds by
+construction against any pixel-domain detector, including CNN steganalysers such
+as SRNet~\cite{boroumand2019} and XuNet~\cite{xu2016}. The combined
+keyspace~\eqref{eq:keyspace} is $6!\cdot2^{256}\approx2^{265.5}$
+(Table~\ref{tab:keyspace}), and the CRC-32 tag catches $100\%$ of injected
+bit-flips in our tamper test ($500$ trials).
 
 \begin{table}[t]
 \centering
@@ -441,6 +487,21 @@ Method & Detection acc.\ (\%) & TPR (\%) & TNR (\%) \\
 LSB              & 87.5 & 75.0 & 100.0 \\
 DCT-LSB          & 58.3 & 16.7 & 100.0 \\
 \textbf{Proposed LG-CISH} & \textbf{54.2} & \textbf{8.3} & 100.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Keyspace and integrity analysis ($N{=}6$).}\label{tab:keyspace}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Component & Size / rate \\
+\midrule
+Codebook orderings & $N! = 720 \approx 2^{9.5}$ \\
+AES-256 key        & $2^{256}$ \\
+Combined keyspace  & $N!\cdot2^{256} \approx 2^{265.5}$ \\
+CRC-32 tamper detection & $1-2^{-32}$ (measured $100\%$, $500$ trials) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -542,6 +603,22 @@ Reconstruction accuracy (\%) & $100.00\pm0.00$ & $[100.00,100.00]$ \\
 Bit error rate               & $0\pm0$         & $[0,0]$ \\
 CLIP margin                  & $0.4223\pm0.0016$ & $[0.4218,0.4227]$ \\
 Images per message           & $372.3\pm91.5$  & $[346.1,398.6]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Robustness significance: proposed vs.\ LSB under JPEG-50 (Welch $t$-test, $N{=}50$ trials).}\label{tab:signif}
+\begin{tabular}{@{}lc@{}}
+\toprule
+Group / statistic & JPEG-50 accuracy (\%) \\
+\midrule
+Proposed LG-CISH (CLIP) & $100.00\pm0.00$ \\
+LSB baseline            & $50.25\pm1.06$ \\
+\midrule
+Welch $t$-statistic & $327.70$ \\
+$p$-value           & $1.59\times10^{-83}\ (<0.05)$ \\
 \bottomrule
 \end{tabular}
 \end{table}
