@@ -18,6 +18,7 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows.meta,calc,fit,backgrounds}
 \usepackage[hidelinks]{hyperref}
+\usepackage[section]{placeins}   % keep floats within their section (Tables/Figs stay out of the bibliography)
 
 \graphicspath{{../LG-COSH/evaluation/figures/}}
 
@@ -42,7 +43,7 @@
 
 \title{\textbf{LG-CISH: Lossless Language-Guided Coverless Image\\
 Steganography via CLIP Semantic Hashing and Base-$N$ Positional Coding}}
-\author{Author Name\thanks{Affiliation, email. Placeholder --- fill before submission.}}
+\author{Ayushman Bhattacharya\thanks{Product Engineer, myceli.ai. Email: ayushman@myceli.ai}}
 \date{\today}
 
 \begin{document}
@@ -587,10 +588,6 @@ addressed by scaling the codebook. Future work will scale $N$, add the LLM
 plausibility filter and a permutation side-channel, and benchmark against
 end-to-end CNN steganalysis.
 
-% -------------------------------------------------------------------
-%  References.  NOTE: entries marked %VERIFY have title/venue/DOI confirmed
-%  via search but author initials/pages should be double-checked before submission.
-% -------------------------------------------------------------------
 \begin{thebibliography}{99}
 
 \bibitem{radford2021}
