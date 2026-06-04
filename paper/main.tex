@@ -314,6 +314,16 @@ Hardware & RTX 3050 6\,GB, 16-core CPU \\
 \end{tabular}
 \end{table}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.72\linewidth]{fig_cb_heatmap.png}
+\caption{Pairwise CLIP cosine similarity of the six codebook images
+(Eq.~\eqref{eq:cos}). All off-diagonal values stay below the threshold
+$\tau{=}0.85$ (max $0.609$), giving a wide separation margin for
+nearest-neighbour recovery.}
+\label{fig:heatmap}
+\end{figure}
+
 \subsection{Qualitative results}
 Fig.~\ref{fig:set1} shows three messages encoded into image sequences;
 Fig.~\ref{fig:set2} shows a sequence decoded back to an exact match. The mapping
@@ -454,6 +464,15 @@ PNG$\to$WebP 80        & 100.00 & $0$ & 0.419 \\
 \end{tabular}
 \end{table}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.82\linewidth]{fig_margin_attacks.png}
+\caption{Mean decoding margin $\gamma$ (Eq.~\eqref{eq:margin}) per channel attack,
+sorted. Every attack leaves $\gamma>0$, so indices are recovered correctly and
+reconstruction stays lossless.}
+\label{fig:marginatk}
+\end{figure}
+
 \subsection{Security and steganalysis resistance}
 Table~\ref{tab:steg} reports a chi-square statistical steganalyser~\cite{westfeld1999}
 applied to natural cover images, LSB-stego, DCT-stego, and LG-CISH ``stego''. The
@@ -531,6 +550,15 @@ Fixed-chunk (2-bit)       & 100 & 100 & 100 & 356.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\linewidth]{fig_ablation_bar.png}
+\caption{Ablation. Left: base-$N$ coding with zlib needs the fewest images per
+message. Right: under Crop-40\% the CLIP matcher keeps $100\%$ accuracy while the
+pHash ablation drops to $0\%$.}
+\label{fig:ablbar}
+\end{figure}
 
 \subsection{Comparative analysis}
 Table~\ref{tab:compare} places LG-CISH against classical and coverless baselines.
