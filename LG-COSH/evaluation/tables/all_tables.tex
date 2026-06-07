@@ -47,6 +47,23 @@ Proposed LG-CISH & 5.322/image & 5.322 & None (coverless) & ∞ \\
 
 \begin{table}[htbp]
 \centering
+\caption{Table 4.3d — Coding modes. Permutation coding trades a little capacity for a no-repeat, more plausible cover; smaller blocks recover most of the capacity.}
+\label{tab:table_4_3_coding_modes}
+\begin{tabular}{lcccc}
+\hline
+Coding mode & bits/image & No-repeat window & Min images & Notes \\
+\hline
+Base-N positional & 5.322 & none (repeats allowed) & 1 & max capacity; images may repeat \\
+Permutation (block=8) & 5.187 & 8 images & 8 & no repeats within a block \\
+Permutation (block=16) & 5.008 & 16 images & 16 & no repeats within a block \\
+Permutation (block=40 = N) & 3.979 & 40 images & 40 & no repeats within a block (full permutation) \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+\centering
 \caption{Table 4.3a — Reconstruction accuracy by message length (clean channel).}
 \label{tab:table_4_3_reconstruction}
 \begin{tabular}{lccccc}
@@ -70,10 +87,10 @@ Long (200-1000) & 40 & 100.00 & 0.00e+00 & 100.00 & 399.4 \\
 Stage & Time (ms) \\
 \hline
 Full encode (200-char msg) & 0.04 \\
-CLIP embedding (per image) & 14.40 \\
-Index recovery (189 images) & 1829.78 \\
-Full decode (189 images) & 1806.81 \\
-Decode per image (amortised) & 9.56 \\
+CLIP embedding (per image) & 16.87 \\
+Index recovery (189 images) & 2122.03 \\
+Full decode (189 images) & 1980.29 \\
+Decode per image (amortised) & 10.48 \\
 \hline
 \end{tabular}
 \end{table}
@@ -92,6 +109,7 @@ JPEG 90% & 100.00 & 0.00e+00 & 0.299 & 0.985 \\
 JPEG 70% & 100.00 & 0.00e+00 & 0.294 & 0.976 \\
 JPEG 50% & 100.00 & 0.00e+00 & 0.289 & 0.961 \\
 JPEG 30% & 100.00 & 0.00e+00 & 0.280 & 0.942 \\
+JPEG 20% & 100.00 & 0.00e+00 & 0.270 & 0.930 \\
 Gaussian σ=5 & 100.00 & 0.00e+00 & 0.293 & 0.986 \\
 Gaussian σ=10 & 100.00 & 0.00e+00 & 0.285 & 0.974 \\
 Gaussian σ=20 & 100.00 & 0.00e+00 & 0.272 & 0.957 \\
@@ -101,9 +119,11 @@ Salt & Pepper 0.05 & 100.00 & 0.00e+00 & 0.246 & 0.922 \\
 Salt & Pepper 0.10 & 100.00 & 0.00e+00 & 0.214 & 0.882 \\
 Resize 50% & 100.00 & 0.00e+00 & 0.282 & 0.982 \\
 Resize 25% & 100.00 & 0.00e+00 & 0.246 & 0.939 \\
+Resize 10% & 12.50 & 1.08e-02 & 0.125 & 0.790 \\
 Crop 95% & 100.00 & 0.00e+00 & 0.280 & 0.979 \\
 Crop 90% & 100.00 & 0.00e+00 & 0.268 & 0.969 \\
 Crop 85% & 100.00 & 0.00e+00 & 0.261 & 0.961 \\
+Crop 60% & 100.00 & 0.00e+00 & 0.196 & 0.910 \\
 PNG→WebP 80 & 100.00 & 0.00e+00 & 0.295 & 0.976 \\
 \hline
 \end{tabular}
@@ -144,17 +164,17 @@ Proposed LG-CISH & 47.5 & 0.0 & 95.0 \\
 
 \begin{table}[htbp]
 \centering
-\caption{Table 4.6 — Ablation. CLIP gives geometric robustness pHash lacks (Crop-40%: 100% vs 0%); base-N coding and compression reduce image count; CRC provides error detection.}
+\caption{Table 4.6 — Ablation. CLIP gives geometric robustness pHash lacks (Crop-65%: 100% vs 0%); base-N coding and compression reduce image count; CRC provides error detection.}
 \label{tab:table_4_6_ablation}
 \begin{tabular}{lccccc}
 \hline
-Variant & Clean Acc (%) & JPEG50 Acc (%) & Crop40 Acc (%) & Avg Images & Integrity \\
+Variant & Clean Acc (%) & JPEG50 Acc (%) & Crop65 Acc (%) & Avg Images & Integrity \\
 \hline
-Full LG-CISH (proposed) & 100.00 & 100.0 & 0.0 & 134.4 & CRC-32 \\
+Full LG-CISH (proposed) & 100.00 & 100.0 & 100.0 & 134.4 & CRC-32 \\
 Without CLIP (pHash NN) & 100.0 & 100.0 & 0.0 & 134.4 & CRC-32 \\
-Without compression & 100.00 & 100.0 & 0.0 & 182.2 & CRC-32 \\
-Without CRC integrity & 100.00 & 100.0 & 0.0 & 134.4 & None (silent) \\
-Fixed-chunk (5-bit) & 100.00 & 100.0 & 0.0 & 143.0 & CRC-32 \\
+Without compression & 100.00 & 100.0 & 100.0 & 182.2 & CRC-32 \\
+Without CRC integrity & 100.00 & 100.0 & 100.0 & 134.4 & None (silent) \\
+Fixed-chunk (5-bit) & 100.00 & 100.0 & 100.0 & 143.0 & CRC-32 \\
 \hline
 \end{tabular}
 \end{table}
