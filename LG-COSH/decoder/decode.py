@@ -22,7 +22,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from bitstream.converter import indices_to_bytes, decompress
+from bitstream.converter import indices_to_bytes, perm_indices_to_bytes, decompress
 from crypto.aes_layer import unwrap
 from clip_engine.embedder import embed_images_batch, embed_image
 from codebook.builder import load_codebook
@@ -70,6 +70,8 @@ def decode(
     codebook: dict | str = CODEBOOK_PATH,
     key: bytes | None = None,
     use_compression: bool = True,
+    use_permutation: bool = False,
+    perm_block: int | None = None,
 ) -> str:
     """Decode an ordered image sequence back to the original message.
 
@@ -78,6 +80,9 @@ def decode(
         codebook: loaded codebook dict, or path to codebook.npz.
         key: optional AES-256 key (must match the encoder's key).
         use_compression: must match the encoder's setting.
+        use_permutation: must match the encoder's setting (Lehmer permutation
+            coding vs base-N).
+        perm_block: must match the encoder's permutation block size.
 
     Returns:
         The reconstructed message string.
@@ -91,8 +96,11 @@ def decode(
     # 1. images -> CLIP nearest-neighbour indices
     indices = recover_indices(image_paths, cb)
 
-    # 2. base-N positional decoding -> framed bytes
-    framed = indices_to_bytes(indices, n)
+    # 2. positional decoding -> framed bytes
+    if use_permutation:
+        framed = perm_indices_to_bytes(indices, n, perm_block)
+    else:
+        framed = indices_to_bytes(indices, n)
 
     # 3. AES decrypt (optional) + CRC-32 verify
     payload = unwrap(framed, key)

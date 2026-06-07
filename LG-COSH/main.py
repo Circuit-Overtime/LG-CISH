@@ -54,21 +54,31 @@ def cmd_demo(args):
     cb = load_codebook()
     key = generate_demo_key() if args.encrypt else None
     msg = args.message
+    perm = getattr(args, "permutation", False)
+    pblock = getattr(args, "perm_block", None)
 
     print(f"\n{'='*60}\n  LG-CISH round-trip demo\n{'='*60}")
     print(f"Original message : {msg!r}")
     print(f"Encryption       : {'AES-256-CBC' if key else 'off (CRC only)'}")
     print(f"Compression      : {'zlib' if not args.no_compress else 'off'}")
+    print(f"Coding           : {'permutation (Lehmer, block=' + str(pblock or cb['n_images']) + ')' if perm else 'base-N'}")
 
-    paths, meta = encode(msg, cb, key=key, use_compression=not args.no_compress)
+    paths, meta = encode(msg, cb, key=key, use_compression=not args.no_compress,
+                         use_permutation=perm, perm_block=pblock)
     print(f"\nEncoded into {len(paths)} images (indices {meta['indices']})")
+    if perm:
+        b = meta["perm_block"]
+        reps = sum(len(blk) - len(set(blk)) for blk in
+                   (meta["indices"][i:i+b] for i in range(0, len(meta["indices"]), b)))
+        print(f"Within-block repeats: {reps} (0 expected for permutation coding)")
 
     rec_idx, margins = recover_indices(paths, cb, return_margins=True)
     idx_ok = rec_idx == meta["indices"]
     min_margin = min(m for _, m in margins)
     print(f"CLIP recovered indices match: {idx_ok}  (min margin {min_margin:.4f})")
 
-    out = decode(paths, cb, key=key, use_compression=not args.no_compress)
+    out = decode(paths, cb, key=key, use_compression=not args.no_compress,
+                 use_permutation=perm, perm_block=pblock)
     print(f"\nDecoded message  : {out!r}")
     print(f"{'='*60}")
     print("ROUND-TRIP:", "SUCCESS" if out == msg else "FAILED")
@@ -99,6 +109,10 @@ def main():
     pm.add_argument("message")
     pm.add_argument("--encrypt", action="store_true")
     pm.add_argument("--no-compress", action="store_true")
+    pm.add_argument("--permutation", action="store_true",
+                    help="use distinct-image permutation (Lehmer) coding")
+    pm.add_argument("--perm-block", type=int, default=None,
+                    help="images per permutation block (default: full codebook N)")
     pm.set_defaults(func=cmd_demo)
 
     args = p.parse_args()

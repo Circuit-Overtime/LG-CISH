@@ -142,6 +142,93 @@ def indices_to_bytes(indices: list[int], n: int) -> bytes:
     return int_to_bytes(base_n_to_int(indices, n))
 
 
+# --- Permutation coding (distinct-image / Lehmer factorial-base channel) ---
+#
+# Base-N coding above already reaches the k*log2(N) ceiling but reuses images
+# (a digit may repeat), which makes the cover look unnatural. Permutation coding
+# instead emits, per block, B *distinct* images selected from the N-image
+# codebook without repetition. A block of B images therefore carries
+# log2(P(N,B)) = log2(N!/(N-B)!) bits via a mixed-radix (Lehmer) code: the t-th
+# image is identified by its rank among the still-available images (radix N-t).
+#
+# This trades a little raw capacity (e.g. N=40, B=N -> log2(40!)/40 ~= 3.98
+# bits/image vs 5.322 for base-N) for a no-repeat, photo-album-like cover. It is
+# fully lossless and bijective; the receiver recovers each image's index by CLIP
+# nearest-neighbour exactly as before, then inverts the Lehmer code.
+
+def _perm_block_to_value(block_indices: list[int], n: int) -> int:
+    """Lehmer encode a block of distinct codebook indices to an integer in
+    [0, n*(n-1)*...*(n-B+1)). `block_indices` must be distinct and in [0, n)."""
+    avail = list(range(n))
+    val = 0
+    for t, idx in enumerate(block_indices):
+        r = avail.index(idx)            # rank of idx among remaining images
+        val = val * (n - t) + r         # radix at step t is (n - t)
+        avail.pop(r)
+    return val
+
+
+def _value_to_perm_block(val: int, n: int, b: int) -> list[int]:
+    """Inverse of _perm_block_to_value: integer -> B distinct codebook indices."""
+    digits = [0] * b
+    for t in range(b - 1, -1, -1):
+        radix = n - t
+        digits[t] = val % radix
+        val //= radix
+    avail = list(range(n))
+    return [avail.pop(d) for d in digits]
+
+
+def _perm_modulus(n: int, b: int) -> int:
+    """P(n, b) = n!/(n-b)! — the number of distinct ordered B-image blocks."""
+    m = 1
+    for t in range(b):
+        m *= (n - t)
+    return m
+
+
+def _block_mask(i: int, m: int) -> int:
+    """Deterministic, shared keystream value in [0, m) for block i.
+
+    Whitens block values so that a small most-significant block value does not
+    map to a tell-tale sorted image prefix (the Lehmer leading-zero artifact).
+    Invertible mod m, so it preserves losslessness and within-block distinctness.
+    """
+    import hashlib
+    h = hashlib.sha256(f"LG-CISH-perm-whiten-{i}".encode()).digest()
+    return int.from_bytes(h, "big") % m
+
+
+def bytes_to_perm_indices(data: bytes, n: int, block: int | None = None) -> list[int]:
+    """Forward map: payload bytes -> ordered codebook indices, no repeats within
+    each block of `block` images (default block = n, i.e. full permutations)."""
+    b = n if block is None else block
+    if not (1 <= b <= n):
+        raise ValueError(f"permutation block {b} must be in [1, {n}]")
+    m = _perm_modulus(n, b)
+    value = bytes_to_int(data)          # >= 1 thanks to the 0x01 sentinel
+    block_vals = int_to_base_n(value, m)  # most-significant block first
+    indices = []
+    for i, bv in enumerate(block_vals):
+        bv = (bv + _block_mask(i, m)) % m   # whiten to avoid sorted prefixes
+        indices.extend(_value_to_perm_block(bv, n, b))
+    return indices
+
+
+def perm_indices_to_bytes(indices: list[int], n: int, block: int | None = None) -> bytes:
+    """Inverse map: ordered codebook indices -> payload bytes."""
+    b = n if block is None else block
+    if len(indices) % b != 0:
+        raise ValueError(f"index count {len(indices)} not a multiple of block {b}")
+    m = _perm_modulus(n, b)
+    block_vals = []
+    for bi, i in enumerate(range(0, len(indices), b)):
+        bv = _perm_block_to_value(indices[i:i + b], n)
+        block_vals.append((bv - _block_mask(bi, m)) % m)  # un-whiten
+    value = base_n_to_int(block_vals, m)
+    return int_to_bytes(value)
+
+
 def get_chunk_size(database_size: int) -> int:
     """Calculate chunk size (bits per image) from database size.
 
