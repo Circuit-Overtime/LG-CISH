@@ -84,7 +84,7 @@ def run():
         ["Capacity", f"{cb['bits_per_image']:.3f} bits/image (base-{cb['n_images']})"],
         ["CLIP model", f"{CLIP_MODEL} (dim {EMBEDDING_DIM})"],
         ["LLM (plausibility / aliases)", "gemini-fast (Gemini 2.5 Flash Lite, vision) + flux (image gen)"],
-        ["Coding modes", f"base-N ({cb['bits_per_image']:.3f} b/img) | permutation (no-repeat, distinct images)"],
+        ["Coding modes", f"base-N ({cb['bits_per_image']:.3f} b/img) or permutation (no-repeat, distinct images)"],
         ["Min CLIP separation threshold", MIN_CLIP_DISTANCE],
         ["Codebook pairwise sim (min/mean/max)",
          f"{sep['min']:.3f} / {sep['mean']:.3f} / {sep['max']:.3f}"],
