@@ -10,11 +10,11 @@ CODEBOOK_PATH = os.path.join(os.path.dirname(__file__), "data", "codebook.npz")
 
 # --- Image Database ---
 # Combined fixed-size database drawn from standard image-processing benchmark
-# suites (UCID, Kodak, DIV2K), each image normalized to a fixed 512x512 PNG. With
-# N images the codebook encodes log2(N) bits per image via base-N positional
+# suites (UCID, Kodak, USC-SIPI), each image normalized to a fixed 512x512 PNG.
+# With N images the codebook encodes log2(N) bits per image via base-N positional
 # coding (see encoder/encode.py). Normalize the image folder with
 # dataset/normalize.py, then rebuild with `python main.py build`.
-DATASET_NAME = "UCID + Kodak + DIV2K (mixed) — 512x512 PNG"
+DATASET_NAME = "UCID + Kodak + USC-SIPI (mixed) — 512x512 PNG"
 DATASET_TRAIN_URL = "http://data.vision.ee.ethz.ch/cvl/DIV2K/DIV2K_train_HR.zip"
 DATASET_VALID_URL = "http://data.vision.ee.ethz.ch/cvl/DIV2K/DIV2K_valid_HR.zip"
 # repo-root images/ (LG-COSH/.. -> project root -> images)

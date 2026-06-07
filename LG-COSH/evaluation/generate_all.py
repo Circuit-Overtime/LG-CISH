@@ -116,6 +116,24 @@ def main():
       "operates at chance (~50%) for the proposed method, versus near-certain detection "
       "for LSB.\n")
 
+    # 4.5b Cover plausibility (cached from evaluation/plausibility_study.py, if present)
+    plaus_json = os.path.join(C.OUT_DIR, "plausibility.json")
+    plaus_tbl = os.path.join(C.TBL_DIR, "table_4_5_plausibility.md")
+    if os.path.exists(plaus_json) and os.path.exists(plaus_tbl):
+        import json as _json
+        pj = _json.load(open(plaus_json))
+        w("\n### 4.5.1 Cover Plausibility\n")
+        w(open(plaus_tbl, encoding="utf-8").read())
+        w(f"\nBeyond statistical undetectability, behavioural stealth depends on whether the "
+          f"image *set* looks natural. An LLM judge (gemini-fast) rates the diverse "
+          f"benchmark codebook at **{pj['diverse_benchmark']['mean']:.2f}** but a themed "
+          f"codebook at **{pj['themed']['mean']:.2f}** — plausibility is governed by codebook "
+          f"*theme*, not the codec (permutation coding scores "
+          f"{pj['diverse_permutation']['mean']:.2f}, essentially unchanged). We deliberately "
+          "use the diverse standard-benchmark set for all quantitative results (dataset "
+          "credibility) and treat codebook theme as an explicit deployment trade-off: a "
+          "themed database is the more plausible real-world cover.\n")
+
     # 4.6
     w("\n## 4.6 Ablation Study\n")
     w(r_abl["table"])
@@ -151,10 +169,16 @@ def main():
     w(r_stat["significance"])
     sig_txt = ("statistically significant (p < 0.05)" if r_stat["p_value"] < 0.05
                else "not statistically significant at this sample size")
-    w(f"\nThe proposed method is bit-exact under JPEG-50 ({r_stat['prop_acc']:.0f}%) whereas "
-      f"LSB collapses to {r_stat['lsb_acc']:.1f}% bit accuracy; the difference is {sig_txt} "
-      f"(Welch t-test, p = {r_stat['p_value']:.2e}). Under a harsher {r_stat['harsh_attack']} "
-      f"attack the semantic CLIP matcher still outperforms the pHash ablation "
+    w(f"\nThe proposed method is lossless, so its clean- and mild-channel accuracy is a "
+      f"deterministic 100% (zero variance); we therefore report the proposed-vs-LSB "
+      f"comparison descriptively — bit-exact at JPEG-50 ({r_stat['prop_acc']:.0f}%) versus "
+      f"LSB's {r_stat['lsb_acc']:.1f}% bit accuracy — and run the significance test on a "
+      f"variance-bearing, like-for-like metric: CLIP versus the pHash matcher across all "
+      f"{r_stat['n_attacks']} channel attacks. CLIP averages "
+      f"{r_stat['clip_attack_mean']:.1f}% decoding accuracy against pHash's "
+      f"{r_stat['phash_attack_mean']:.1f}%, a difference that is {sig_txt} "
+      f"(paired Wilcoxon signed-rank, p = {r_stat['p_value']:.2e}); the gap is starkest "
+      f"under geometric attacks such as {r_stat['harsh_attack']} "
       f"({r_stat['clip_harsh']:.0f}% vs {r_stat['phash_harsh']:.0f}%). One-way ANOVA across "
       f"message-length buckets shows the CLIP margin is homogeneous "
       f"(F = {r_stat['anova_F']:.2f}, p = {r_stat['anova_p']:.2f}).\n")

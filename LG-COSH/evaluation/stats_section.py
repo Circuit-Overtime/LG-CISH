@@ -75,27 +75,60 @@ def run():
         f"Table 4.8a — Mean ± std and 95%% confidence intervals over N={N} trials (clean channel).")
     print(summ_md)
 
-    # --- PRIMARY significance: proposed vs LSB robustness under JPEG-50 ---
+    # --- DESCRIPTIVE: proposed vs LSB under JPEG-50 (proposed is deterministic) ---
+    # The proposed method is lossless, so its accuracy is a constant 100% (zero
+    # variance). A t-test against a constant is degenerate, so we report this
+    # comparison descriptively and run the significance test below on a
+    # variance-bearing, like-for-like metric instead.
     src = C.attacked_source_embeddings(cb, lambda im: C.atk_jpeg(im, 50))
     pc, mc, tc = C.source_lookup(src, cb["embeddings"])
     prop_acc = [1.0 if C.evaluate_message_fast(m, cb, pc, mc, tc)["exact"] else 0.0 for m in msgs]
     lsb_acc = lsb_jpeg50_accuracy_trials(cb, N)
+    print(f"\n  [descriptive] Proposed JPEG50 reconstruction : {100*np.mean(prop_acc):.2f}% "
+          f"(deterministic, std {100*np.std(prop_acc):.2f})")
+    print(f"  [descriptive] LSB JPEG50 bit accuracy        : {100*np.mean(lsb_acc):.2f}% "
+          f"± {100*np.std(lsb_acc):.2f}")
 
-    t_stat, p_val = stats.ttest_ind(prop_acc, lsb_acc, equal_var=False)
+    # --- PRIMARY significance: CLIP vs pHash decoding accuracy ACROSS attacks ---
+    # Paired by attack (same channel applied to both matchers), both vary, same
+    # units -> a meaningful, non-degenerate significance test of CLIP's robustness.
+    import ablation as A
+    attack_bank = C.message_bank([("m", 50, 200)], 20)["m"]
+    clip_per_attack, phash_per_attack, attack_names = [], [], []
+    for name, fn in C.attack_suite():
+        if name.startswith("No attack"):
+            continue
+        srcA = C.attacked_source_embeddings(cb, fn)
+        pa, ma, ta = C.source_lookup(srcA, cb["embeddings"])
+        clip_a = np.mean([1.0 if C.evaluate_message_fast(m, cb, pa, ma, ta)["exact"] else 0.0
+                          for m in attack_bank])
+        phash_a = A.phash_attack_accuracy(cb, attack_bank, fn) / 100.0
+        clip_per_attack.append(100 * clip_a)
+        phash_per_attack.append(100 * phash_a)
+        attack_names.append(name)
+
+    # Wilcoxon signed-rank (paired, non-parametric) — robust to the bounded [0,100] scale.
+    try:
+        w_stat, p_val = stats.wilcoxon(clip_per_attack, phash_per_attack, alternative="greater")
+    except ValueError:
+        w_stat, p_val = float("nan"), 1.0
     sig = "YES (p < 0.05)" if p_val < 0.05 else "no"
-    print(f"\n  Proposed JPEG50 reconstruction : {100*np.mean(prop_acc):.2f}% ± {100*np.std(prop_acc):.2f}")
-    print(f"  LSB JPEG50 bit accuracy        : {100*np.mean(lsb_acc):.2f}% ± {100*np.std(lsb_acc):.2f}")
-    print(f"  Welch t-test (proposed vs LSB) : t={t_stat:.3f}, p={p_val:.3e} -> significant: {sig}")
+    print(f"  CLIP  mean accuracy across {len(attack_names)} attacks : {np.mean(clip_per_attack):.1f}%")
+    print(f"  pHash mean accuracy across {len(attack_names)} attacks : {np.mean(phash_per_attack):.1f}%")
+    print(f"  Wilcoxon signed-rank (CLIP > pHash)  : W={w_stat:.1f}, p={p_val:.3e} -> significant: {sig}")
 
     sig_rows = [
-        ["Proposed LG-CISH (CLIP)", f"{100*np.mean(prop_acc):.2f}", f"{100*np.std(prop_acc):.2f}"],
-        ["LSB baseline", f"{100*np.mean(lsb_acc):.2f}", f"{100*np.std(lsb_acc):.2f}"],
-        ["Welch t-statistic", f"{t_stat:.2f}", ""],
-        ["p-value", f"{p_val:.3e}", sig],
+        ["Proposed (CLIP) — mean over attacks", f"{np.mean(clip_per_attack):.1f}", f"{np.std(clip_per_attack):.1f}"],
+        ["pHash ablation — mean over attacks", f"{np.mean(phash_per_attack):.1f}", f"{np.std(phash_per_attack):.1f}"],
+        [f"Wilcoxon W (paired, N={len(attack_names)} attacks)", f"{w_stat:.1f}", ""],
+        ["p-value (one-sided, CLIP > pHash)", f"{p_val:.3e}", sig],
+        ["[ref] Proposed vs LSB @ JPEG-50", f"{100*np.mean(prop_acc):.0f} vs {100*np.mean(lsb_acc):.0f}", "descriptive"],
     ]
     sig_md = C.save_table(
-        "table_4_8_significance", sig_rows, ["Group", "JPEG50 Accuracy (%)", "Std"],
-        "Table 4.8b — Robustness of the proposed method vs. LSB under JPEG-50 (Welch t-test).")
+        "table_4_8_significance", sig_rows, ["Group", "Accuracy (%)", "Std / note"],
+        "Table 4.8b — Significance of CLIP's robustness over the pHash matcher: paired "
+        "Wilcoxon signed-rank across all channel attacks (proposed-vs-LSB @ JPEG-50 shown "
+        "descriptively, as the lossless method is deterministic).")
 
     # --- SECONDARY (honest): CLIP vs pHash under a harsh attack ---
     import ablation as A
@@ -124,6 +157,9 @@ def run():
 
     return {"summary": summ_md, "significance": sig_md, "p_value": float(p_val),
             "prop_acc": float(100*np.mean(prop_acc)), "lsb_acc": float(100*np.mean(lsb_acc)),
+            "clip_attack_mean": float(np.mean(clip_per_attack)),
+            "phash_attack_mean": float(np.mean(phash_per_attack)),
+            "n_attacks": len(attack_names),
             "clip_harsh": float(100*clip_h), "phash_harsh": phash_h,
             "harsh_attack": harsh[0], "anova_F": float(f_stat), "anova_p": float(f_p)}
 
