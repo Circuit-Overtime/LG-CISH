@@ -655,7 +655,7 @@ Fixed-chunk (5-bit)       & 100 & 100 & 100 & 143.0 \\
 \centering
 \includegraphics[width=0.9\linewidth]{fig_ablation_bar.png}
 \caption{Ablation. Left: base-$N$ coding with zlib needs the fewest images per
-message. Right: under Crop-40\% the CLIP matcher keeps $100\%$ accuracy while the
+message. Right: under Crop-65\% the CLIP matcher keeps $100\%$ accuracy while the
 pHash ablation drops to $0\%$.}
 \label{fig:ablbar}
 \end{figure}
@@ -666,7 +666,11 @@ It is the only method combining zero distortion, full JPEG-50 robustness, and
 chance-level detectability. Fig.~\ref{fig:robcurve} plots decoding accuracy versus
 JPEG quality: LG-CISH stays at $100\%$ while LSB collapses toward $50\%$ (random
 bits) and DCT-LSB degrades steadily. Fig.~\ref{fig:paycurve} shows reconstruction
-remains lossless as the payload (and thus sequence length) grows, and
+remains lossless as the payload (and thus sequence length) grows. On the
+distortion--capacity plane (Fig.~\ref{fig:psnrbpp}) the pixel baselines trade
+quality for payload (LSB falls from $69$ to $59$\,dB across $0.05$--$0.50$\,bpp,
+DCT-LSB sits at $42$--$44$\,dB and caps near $0.016$\,bpp), whereas LG-CISH, modifying
+no pixels, has infinite PSNR at every rate and dominates the whole plane.
 Fig.~\ref{fig:detbar} compares measured detection rates.
 
 \begin{table}[t]
@@ -676,11 +680,11 @@ Fig.~\ref{fig:detbar} compares measured detection rates.
 \toprule
 Method & Capacity & JPEG50 acc.\ (\%) & Detection (\%) & PSNR (dB) \\
 \midrule
-LSB~\cite{chan2004}            & 786{,}432 bits & 49.5 & 88 & 51.1 \\
-DCT-LSB~\cite{westfeld2001f5}  & $\sim$4096 bits & 44.6 & [70--90]~\cite{boroumand2019} & 38--42 \\
+LSB~\cite{chan2004}            & 786{,}432 bits & 51.4 & 98 & 51.1 \\
+DCT-LSB~\cite{westfeld2001f5}  & $\sim$4096 bits & 42.1 & [70--90]~\cite{boroumand2019} & 38--42 \\
 DWT--DCT~\cite{westfeld2001f5} & $\sim$4096 bits & [85] & [60--80] & 40--44 \\
 Coverless~\cite{zhou2015}      & low & [95] & [$\sim$50] & $\infty$ \\
-\textbf{Proposed LG-CISH}      & 2.585 bits/img & \textbf{100.0} & \textbf{54} & $\infty$ \\
+\textbf{Proposed LG-CISH}      & 5.322 bits/img & \textbf{100.0} & \textbf{48} & $\infty$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -703,6 +707,15 @@ while the required number of images grows linearly.}
 
 \begin{figure}[t]
 \centering
+\includegraphics[width=0.86\linewidth]{fig_4_7_psnr_bpp.png}
+\caption{Distortion vs.\ embedding rate. Pixel baselines lose PSNR as bits/pixel
+grow; LG-CISH modifies no pixels, so its PSNR is infinite (the ceiling line) at
+every rate.}
+\label{fig:psnrbpp}
+\end{figure}
+
+\begin{figure}[t]
+\centering
 \includegraphics[width=0.7\linewidth]{fig_4_7_detection.png}
 \caption{Measured steganalysis detection rates (lower is stealthier). LG-CISH sits
 at the 50\% chance line.}
@@ -712,13 +725,17 @@ at the 50\% chance line.}
 \subsection{Statistical validation}
 Over $N{=}50$ independent trials (Table~\ref{tab:stats}) reconstruction accuracy
 is $100.00\pm0.00\%$ and BER is $0$, with a stable CLIP margin
-$0.4223\pm0.0016$. A Welch $t$-test comparing the proposed method against LSB
-under JPEG-50 (proposed $100\%$ vs.\ LSB $50.25\pm1.06\%$ bit accuracy) gives
-$t{=}327.7$, $p{=}1.59\times10^{-83}$ --- a statistically significant difference
-($p<0.05$). Under the harsher Crop-40\% attack CLIP retains $100\%$ versus pHash
-$0\%$. A one-way ANOVA of the CLIP margin across the three length buckets finds it
-homogeneous ($F{=}0.29$, $p{=}0.75$), i.e.\ message length does not affect
-recovery reliability.
+$0.3020\pm0.0059$. Because the lossless method is deterministic at $100\%$ (zero
+variance), a $t$-test against it is degenerate; we therefore report the
+proposed-vs-LSB comparison descriptively---bit-exact at JPEG-50 ($100\%$) versus
+LSB's $50.2\pm1.2\%$ bit accuracy---and place the significance test on the regime
+that actually discriminates the matchers: geometric robustness. Across a paired
+sweep of seven crop strengths (non-geometric channels leave both at $100\%$ and so
+tie), CLIP decodes $100\%$ versus pHash $0\%$, a difference that is statistically
+significant by the paired Wilcoxon signed-rank test ($W{=}28$,
+$p{=}7.8\times10^{-3}$; e.g.\ at Crop-65\%, $100\%$ vs.\ $0\%$). A one-way ANOVA of
+the CLIP margin across the three length buckets finds it homogeneous ($F{=}1.99$,
+$p{=}0.15$), i.e.\ message length does not affect recovery reliability.
 
 \begin{table}[t]
 \centering
@@ -729,24 +746,25 @@ Metric & Mean $\pm$ Std & 95\% CI \\
 \midrule
 Reconstruction accuracy (\%) & $100.00\pm0.00$ & $[100.00,100.00]$ \\
 Bit error rate               & $0\pm0$         & $[0,0]$ \\
-CLIP margin                  & $0.4223\pm0.0016$ & $[0.4218,0.4227]$ \\
-Images per message           & $372.3\pm91.5$  & $[346.1,398.6]$ \\
+CLIP margin                  & $0.3020\pm0.0059$ & $[0.3003,0.3037]$ \\
+Images per message           & $181.2\pm44.5$  & $[168.5,194.0]$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[t]
 \centering
-\caption{Robustness significance: proposed vs.\ LSB under JPEG-50 (Welch $t$-test, $N{=}50$ trials).}\label{tab:signif}
+\caption{Significance of CLIP's geometric robustness over the pHash matcher: paired Wilcoxon signed-rank across a crop-strength sweep (proposed-vs-LSB @ JPEG-50 shown descriptively, as the lossless method is deterministic).}\label{tab:signif}
 \begin{tabular}{@{}lc@{}}
 \toprule
-Group / statistic & JPEG-50 accuracy (\%) \\
+Group / statistic & Accuracy (\%) \\
 \midrule
-Proposed LG-CISH (CLIP) & $100.00\pm0.00$ \\
-LSB baseline            & $50.25\pm1.06$ \\
+Proposed (CLIP) --- crop-sweep mean & $100.0\pm0.0$ \\
+pHash ablation --- crop-sweep mean  & $0.0\pm0.0$ \\
 \midrule
-Welch $t$-statistic & $327.70$ \\
-$p$-value           & $1.59\times10^{-83}\ (<0.05)$ \\
+Wilcoxon $W$ (paired, 7 crop levels) & $28.0$ \\
+$p$-value (one-sided, CLIP $>$ pHash) & $7.8\times10^{-3}\ (<0.05)$ \\
+Ref.\ Proposed vs.\ LSB @ JPEG-50 & $100$ vs.\ $50$ (descriptive) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -755,11 +773,22 @@ $p$-value           & $1.59\times10^{-83}\ (<0.05)$ \\
 \section{Discussion and Limitations}\label{sec:discussion}
 % -------------------------------------------------------------------
 \paragraph{Capacity is database-bound.}
-Capacity scales as $\log_2 N$ (Eq.~\eqref{eq:cap}); the $N{=}6$ proof of concept
-therefore needs many images per message (Table~\ref{tab:recon}). Practical
-deployments would use $N{=}10^3$--$10^4$ images for $10$--$13$ bits/image. This
-is the deliberate trade of the coverless paradigm: capacity for zero distortion
-and undetectability.
+Capacity scales as $\log_2 N$ (Eq.~\eqref{eq:cap}); the $N{=}40$ codebook
+gives $5.322$ bits/image and still needs many images per long message
+(Table~\ref{tab:recon}). Practical deployments would use $N{=}10^3$--$10^4$ images
+for $10$--$13$ bits/image. This is the deliberate trade of the coverless paradigm:
+capacity for zero distortion and undetectability.
+
+\paragraph{Plausibility is theme-bound.}
+Behavioural stealth (Section~\ref{sec:plaus}) is governed by the \emph{theme} of
+the codebook, not by the codec: a diverse benchmark database scores low on
+LLM-judged plausibility ($0.12$) while a thematically coherent one scores high
+($0.88$), and permutation coding---though it removes the repeated-image tell---does
+not by itself make a diverse set look coherent. We use the diverse benchmark for
+quantitative credibility and recommend a themed database (where the LLM-guided
+alias layer is most effective) for deployments that must withstand visual
+inspection. Closing the gap between credibility and plausibility is left as future
+work.
 
 \paragraph{The database is the key.}
 Security rests on the secrecy of the shared database and codebook
@@ -776,21 +805,24 @@ corruption, enabling retransmission.
 Our detector is a classical statistical attack; because the stego images are
 unmodified, undetectability against learned detectors holds by construction, but a
 dedicated study against SRNet/XuNet trained end-to-end is left as future work,
-alongside an optional LLM plausibility filter to make the \emph{ordering} of the
-sequence look like a natural photo album.
+alongside a tighter integration of the LLM plausibility filter and alias layer
+with a themed codebook to make the \emph{set and ordering} of the sequence look
+like a natural photo album.
 
 % -------------------------------------------------------------------
 \section{Conclusion}\label{sec:conclusion}
 % -------------------------------------------------------------------
 LG-CISH is a lossless coverless image-steganography scheme that pairs CLIP
-semantic hashing with base-$N$ positional coding. It transmits only unmodified
-natural images, achieving bit-exact reconstruction (BER $=0$), $100\%$ robustness
-across eighteen channel attacks including JPEG-30 and Crop-70\%, chance-level
-steganalysis detectability ($54\%$ vs.\ $88\%$ for LSB), and a statistically
-significant robustness advantage over pixel-domain baselines
-($p{=}1.6\times10^{-83}$). The main limitation, database-bound capacity, is
-addressed by scaling the codebook. Future work will scale $N$, add the LLM
-plausibility filter and a permutation side-channel, and benchmark against
+semantic hashing with base-$N$ positional coding, with an optional distinct-image
+permutation mode and an LLM-guided alias layer for cover shaping. It transmits only
+unmodified natural images, achieving bit-exact reconstruction (BER $=0$), $100\%$
+robustness across twenty of twenty-one channel attacks (graceful degradation only
+under a $10\times$ downscale), chance-level steganalysis detectability ($47.5\%$
+vs.\ $97.5\%$ for LSB), and a statistically significant geometric-robustness
+advantage over perceptual hashing ($p{=}7.8\times10^{-3}$). Its limitations are
+honest: database-bound capacity, addressed by scaling the codebook, and
+theme-bound plausibility, addressed by a coherent database. Future work will scale
+$N$, tighten the themed-codebook plausibility loop, and benchmark against
 end-to-end CNN steganalysis.
 
 \begin{thebibliography}{99}
