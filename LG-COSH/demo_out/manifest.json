@@ -1,7 +1,7 @@
 {
-  "num_images": 35,
-  "permutation": false,
-  "perm_block": null,
+  "num_images": 48,
+  "permutation": true,
+  "perm_block": 8,
   "compressed": true,
   "encrypted": false
 }
