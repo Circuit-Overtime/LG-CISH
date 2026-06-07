@@ -75,8 +75,16 @@ def encode(
     else:
         indices = bytes_to_indices(framed, n)
 
-    # 5. indices -> image paths (direct table lookup)
-    image_paths = [paths[i] for i in indices]
+    # 5. indices -> image paths. With aliases on, pick a plausible candidate per
+    #    slot (decoder is unaffected — every candidate maps to the same slot).
+    if use_aliases:
+        from codebook.aliases import load_aliases, choose_paths
+        aliases = cb.get("aliases") if isinstance(cb, dict) else None
+        if aliases is None:
+            aliases = load_aliases()
+        image_paths = choose_paths(indices, paths, aliases, chooser=chooser)
+    else:
+        image_paths = [paths[i] for i in indices]
 
     metadata = {
         "n_images": n,
@@ -87,6 +95,7 @@ def encode(
         "compressed": use_compression,
         "permutation": use_permutation,
         "perm_block": (n if perm_block is None else perm_block) if use_permutation else None,
+        "aliased": use_aliases,
         "payload_bits": len(framed) * 8,
     }
     return image_paths, metadata

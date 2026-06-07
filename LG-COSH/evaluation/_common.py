@@ -160,6 +160,7 @@ def attack_suite():
         ("JPEG 70%", lambda im: atk_jpeg(im, 70)),
         ("JPEG 50%", lambda im: atk_jpeg(im, 50)),
         ("JPEG 30%", lambda im: atk_jpeg(im, 30)),
+        ("JPEG 20%", lambda im: atk_jpeg(im, 20)),
         ("Gaussian σ=5", lambda im: atk_gaussian(im, 5)),
         ("Gaussian σ=10", lambda im: atk_gaussian(im, 10)),
         ("Gaussian σ=20", lambda im: atk_gaussian(im, 20)),
@@ -169,9 +170,11 @@ def attack_suite():
         ("Salt & Pepper 0.10", lambda im: atk_salt_pepper(im, 0.10)),
         ("Resize 50%", lambda im: atk_resize(im, 0.5)),
         ("Resize 25%", lambda im: atk_resize(im, 0.25)),
+        ("Resize 10%", lambda im: atk_resize(im, 0.10)),
         ("Crop 95%", lambda im: atk_crop(im, 0.95)),
         ("Crop 90%", lambda im: atk_crop(im, 0.90)),
         ("Crop 85%", lambda im: atk_crop(im, 0.85)),
+        ("Crop 60%", lambda im: atk_crop(im, 0.60)),
         ("PNG→WebP 80", lambda im: atk_webp(im, 80)),
     ]
 
