@@ -62,6 +62,38 @@ def capacity_table(cb):
     return md
 
 
+def coding_modes_table(cb):
+    """Compare base-N positional coding against distinct-image permutation
+    (Lehmer) coding at several block sizes: capacity vs. the no-repeat guarantee."""
+    import math
+    from bitstream.converter import _perm_modulus
+    n = cb["n_images"]
+    base_bpi = math.log2(n)
+    rows = [["Base-N positional", f"{base_bpi:.3f}", "none (repeats allowed)", "1",
+             "max capacity; images may repeat"]]
+    for b in (8, 16, n):
+        bpi = math.log2(_perm_modulus(n, b)) / b
+        label = f"Permutation (block={b}{' = N' if b == n else ''})"
+        rows.append([label, f"{bpi:.3f}", f"{b} images", f"{b}",
+                     "no repeats within a block" + (" (full permutation)" if b == n else "")])
+    md = C.save_table(
+        "table_4_3_coding_modes", rows,
+        ["Coding mode", "bits/image", "No-repeat window", "Min images", "Notes"],
+        "Table 4.3d — Coding modes. Permutation coding trades a little capacity for a "
+        "no-repeat, more plausible cover; smaller blocks recover most of the capacity.")
+    return md
+
+
+def alias_coverage(cb):
+    """Report LLM-generated alias candidate coverage, if a manifest exists."""
+    from codebook.aliases import load_aliases, alias_stats
+    al = load_aliases()
+    st = alias_stats(al, cb["n_images"])
+    print(f"  Alias coverage: {st['slots_with_alias']}/{cb['n_images']} slots, "
+          f"{st['total_candidates']} verified candidates")
+    return st
+
+
 def timing_table(cb):
     msg = C.random_message(200, __import__("random").Random(0))
     # encode
@@ -119,11 +151,15 @@ def run():
     print(rec_md)
     cap_md = capacity_table(cb)
     print(cap_md)
+    modes_md = coding_modes_table(cb)
+    print(modes_md)
     tim_md = timing_table(cb)
     print(tim_md)
     p, r = retrieval_pr(cb)
-    return {"reconstruction": rec_md, "capacity": cap_md, "timing": tim_md,
-            "detail": detail, "precision": p, "recall": r}
+    alias_st = alias_coverage(cb)
+    return {"reconstruction": rec_md, "capacity": cap_md, "coding_modes": modes_md,
+            "timing": tim_md, "detail": detail, "precision": p, "recall": r,
+            "alias_stats": alias_st}
 
 
 if __name__ == "__main__":

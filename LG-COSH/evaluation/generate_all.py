@@ -57,7 +57,11 @@ def main():
       "suites (UCID, Kodak, USC-SIPI), each normalized to a fixed 512×512 canvas "
       f"({cb['bits_per_image']:.3f} bits/image, base-{cb['n_images']} positional "
       "coding). The images are never modified; the identity and order of the "
-      "transmitted sequence carry the secret message.\n")
+      "transmitted sequence carry the secret message. Two coding modes are "
+      "available — base-N positional coding (maximum capacity) and distinct-image "
+      "permutation coding (no repeated images, more plausible cover) — together "
+      "with an optional LLM-guided alias layer that swaps in interchangeable cover "
+      "images without changing the encoded bits.\n")
 
     # 4.1
     w("\n## 4.1 Experimental Setup\n")
@@ -80,10 +84,18 @@ def main():
     w("\n## 4.3 Quantitative Evaluation\n")
     w(r_quant["reconstruction"]); w("\n")
     w(r_quant["capacity"]); w("\n")
+    w(r_quant["coding_modes"]); w("\n")
     w(r_quant["timing"]); w("\n")
     w(f"\nCLIP top-1 retrieval precision/recall on the codebook: "
       f"**{100*r_quant['precision']:.2f}%**. Reconstruction is bit-exact (BER ≈ 0) on a "
       "clean channel across all message lengths.\n")
+    ast = r_quant.get("alias_stats")
+    if ast and ast["total_candidates"]:
+        w(f"\nThe LLM-guided alias layer adds **{ast['total_candidates']}** CLIP-verified "
+          f"candidate images across **{ast['slots_with_alias']}/{cb['n_images']}** slots "
+          "(captioned with gemini-fast, generated with flux, and verified to map back to "
+          "the correct slot). These give the plausibility selector interchangeable cover "
+          "choices **without changing the encoded bits** — decoding is provably unaffected.\n")
 
     # 4.4
     w("\n## 4.4 Robustness Analysis\n")
