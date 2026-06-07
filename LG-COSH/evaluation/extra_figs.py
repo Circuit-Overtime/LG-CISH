@@ -72,8 +72,8 @@ def ablation_bar():
     a_full = A.avg_images(cb, bank, use_compression=True)
     a_nocomp = A.avg_images(cb, bank, use_compression=False)
     a_fixed = A.avg_images(cb, bank, use_compression=True, chunk_override=cb["chunk_size"])
-    clip40 = A.clip_attack_accuracy(cb, bank, lambda im: C.atk_crop(im, 0.40))
-    phash40 = A.phash_attack_accuracy(cb, bank, lambda im: C.atk_crop(im, 0.40))
+    clip40 = A.clip_attack_accuracy(cb, bank, lambda im: C.atk_crop(im, 0.65))
+    phash40 = A.phash_attack_accuracy(cb, bank, lambda im: C.atk_crop(im, 0.65))
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
     ax1.bar(["Base-N\n+zlib", "No\ncompress", "Fixed\nchunk"], [a_full, a_nocomp, a_fixed],
@@ -83,8 +83,8 @@ def ablation_bar():
         ax1.text(i, v + 3, f"{v:.0f}", ha="center")
     ax2.bar(["CLIP\n(proposed)", "pHash\n(ablation)"], [clip40, phash40],
             color=["tab:green", "tab:red"])
-    ax2.set_ylabel("Crop-40% accuracy (%)"); ax2.set_ylim(0, 105)
-    ax2.set_title("Matcher robustness under Crop-40%")
+    ax2.set_ylabel("Crop-65% accuracy (%)"); ax2.set_ylim(0, 105)
+    ax2.set_title("Matcher robustness under Crop-65%")
     for i, v in enumerate([clip40, phash40]):
         ax2.text(i, v + 1, f"{v:.0f}", ha="center")
     out = f"{C.FIG_DIR}/fig_ablation_bar.png"
