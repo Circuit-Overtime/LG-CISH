@@ -4,8 +4,8 @@ Simulates real-world channel attacks (JPEG, Gaussian/salt&pepper noise, resize,
 crop, format conversion) on the transmitted image sequence and measures decoding
 accuracy, BER, and the CLIP distance margin at each degradation level.
 
-Fast path: each attack is applied to the 6 unique codebook images once, then all
-test messages are scored by table lookup (the sequence only ever reuses those 6).
+Fast path: each attack is applied to the N unique codebook images once, then all
+test messages are scored by table lookup (the sequence only ever reuses those N).
 """
 
 import numpy as np

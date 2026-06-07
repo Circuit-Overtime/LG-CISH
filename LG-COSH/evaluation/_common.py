@@ -177,7 +177,7 @@ def attack_suite():
 
 
 # ============================================================
-# Fast path: attack the 6 unique codebook images ONCE per attack
+# Fast path: attack the N unique codebook images ONCE per attack
 # ============================================================
 from clip_engine.embedder import embed_images_batch  # noqa: E402
 
@@ -254,7 +254,7 @@ def apply_attack_to_sequence(image_paths, attack_fn, tmp_dir):
     """Apply attack_fn to every image in the sequence, save to tmp_dir, return new paths.
 
     Distinct source paths are transformed once and cached (the sequence repeats
-    only 6 unique codebook images, so this is cheap).
+    only the N unique codebook images, so this is cheap).
     """
     cache = {}
     out_paths = []

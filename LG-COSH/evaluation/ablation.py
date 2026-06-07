@@ -5,7 +5,7 @@ Removes/swaps one component at a time to show each is necessary:
   * Without CLIP        -> perceptual-hash (pHash) matcher instead  (robustness drops)
   * Without compression -> more images per message                  (efficiency drops)
   * Without CRC         -> channel errors go undetected             (integrity lost)
-  * Fixed-chunk coding  -> floor(log2 N)=2 bits/image instead of base-N 2.585 (capacity drops)
+  * Fixed-chunk coding  -> floor(log2 N) bits/image instead of base-N log2(N) (capacity drops)
 """
 
 import math

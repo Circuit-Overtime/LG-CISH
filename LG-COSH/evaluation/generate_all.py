@@ -52,10 +52,12 @@ def main():
     L = []
     w = L.append
     w("# 4. Experimental Results and Performance Evaluation\n")
-    w("All experiments use the LG-CISH proof-of-concept codebook of "
-      f"{cb['n_images']} visually-distinct DIV2K images ({cb['bits_per_image']:.3f} "
-      "bits/image, base-6 positional coding). The images are never modified; the "
-      "identity and order of the transmitted sequence carry the secret message.\n")
+    w("All experiments use the LG-CISH codebook of "
+      f"{cb['n_images']} visually-distinct images drawn from standard benchmark "
+      "suites (UCID, Kodak, USC-SIPI), each normalized to a fixed 512×512 canvas "
+      f"({cb['bits_per_image']:.3f} bits/image, base-{cb['n_images']} positional "
+      "coding). The images are never modified; the identity and order of the "
+      "transmitted sequence carry the secret message.\n")
 
     # 4.1
     w("\n## 4.1 Experimental Setup\n")
@@ -118,6 +120,16 @@ def main():
     # 4.7
     w("\n## 4.7 Comparative Analysis\n")
     w(r_cmp["table"])
+    pb = r_cmp.get("psnr_bpp")
+    if pb:
+        w(f"\nOn the distortion–capacity axis, the pixel baselines trade quality for "
+          f"payload: LSB falls from {pb['lsb_psnr'][0]:.0f} dB at "
+          f"{pb['lsb_bpp'][0]:.2f} bpp to {pb['lsb_psnr'][-1]:.0f} dB at "
+          f"{pb['lsb_bpp'][-1]:.2f} bpp, while DCT-LSB sits at "
+          f"{pb['dct_psnr'][-1]:.0f}–{pb['dct_psnr'][0]:.0f} dB and caps out near "
+          f"{pb['dct_bpp'][-1]:.3f} bpp. Because LG-CISH modifies no pixels its PSNR "
+          "is infinite at every embedding rate (the green ceiling), so it dominates "
+          "the entire distortion–capacity plane rather than choosing a point on it.\n")
     for f in r_cmp["figures"]:
         w(f"\n![Comparison]({rel(f)})\n")
 
