@@ -2,8 +2,8 @@
 
 | Stage | Time (ms) |
 | --- | --- |
-| Full encode (200-char msg) | 0.09 |
-| CLIP embedding (per image) | 34.59 |
-| Index recovery (388 images) | 11953.71 |
-| Full decode (388 images) | 12067.98 |
-| Decode per image (amortised) | 31.10 |
+| Full encode (200-char msg) | 0.04 |
+| CLIP embedding (per image) | 14.40 |
+| Index recovery (189 images) | 1829.78 |
+| Full decode (189 images) | 1806.81 |
+| Decode per image (amortised) | 9.56 |

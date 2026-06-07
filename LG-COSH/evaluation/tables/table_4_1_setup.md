@@ -2,13 +2,13 @@
 
 | Parameter | Value |
 | --- | --- |
-| Dataset | DIV2K (curated subset) |
-| Codebook images (N) | 6 |
-| Capacity | 2.585 bits/image (base-6) |
+| Dataset | UCID + Kodak + DIV2K (mixed) — 512x512 PNG |
+| Codebook images (N) | 40 |
+| Capacity | 5.322 bits/image (base-40) |
 | CLIP model | ViT-B/32 (dim 512) |
 | Min CLIP separation threshold | 0.85 |
-| Codebook pairwise sim (min/mean/max) | 0.353 / 0.497 / 0.609 |
-| Decoding margin (1 - max sim) | 0.391 |
+| Codebook pairwise sim (min/mean/max) | 0.305 / 0.513 / 0.827 |
+| Decoding margin (1 - max sim) | 0.173 |
 | Encryption | AES-256-CBC (optional) |
 | Integrity | CRC-32 |
 | Compression | zlib (optional) |

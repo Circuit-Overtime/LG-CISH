@@ -3,6 +3,6 @@
 | Group | JPEG50 Accuracy (%) | Std |
 | --- | --- | --- |
 | Proposed LG-CISH (CLIP) | 100.00 | 0.00 |
-| LSB baseline | 50.25 | 1.06 |
-| Welch t-statistic | 327.70 |  |
-| p-value | 1.590e-83 | YES (p < 0.05) |
+| LSB baseline | 50.17 | 1.19 |
+| Welch t-statistic | 293.57 |  |
+| p-value | 3.471e-81 | YES (p < 0.05) |

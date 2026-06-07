@@ -8,13 +8,13 @@
 \hline
 Parameter & Value \\
 \hline
-Dataset & DIV2K (curated subset) \\
-Codebook images (N) & 6 \\
-Capacity & 2.585 bits/image (base-6) \\
+Dataset & UCID + Kodak + DIV2K (mixed) — 512x512 PNG \\
+Codebook images (N) & 40 \\
+Capacity & 5.322 bits/image (base-40) \\
 CLIP model & ViT-B/32 (dim 512) \\
 Min CLIP separation threshold & 0.85 \\
-Codebook pairwise sim (min/mean/max) & 0.353 / 0.497 / 0.609 \\
-Decoding margin (1 - max sim) & 0.391 \\
+Codebook pairwise sim (min/mean/max) & 0.305 / 0.513 / 0.827 \\
+Decoding margin (1 - max sim) & 0.173 \\
 Encryption & AES-256-CBC (optional) \\
 Integrity & CRC-32 \\
 Compression & zlib (optional) \\
@@ -36,10 +36,10 @@ Python & 3.11.15 \\
 \hline
 Method & Capacity (bits) & bits/pixel & Pixel Distortion & PSNR (dB) \\
 \hline
-LSB (spatial) & 8,298,720 & ≈3.0 & Yes (high) & 51.1 \\
-DCT-LSB & 43,095 & ≈0.016 & Yes (moderate) & 38–42 \\
-DWT-DCT [cited] & ~43,222 & ≈0.015 & Yes (low) & 40–44 \\
-Proposed LG-CISH & 2.585/image & 2.585 & None (coverless) & ∞ \\
+LSB (spatial) & 786,432 & ≈3.0 & Yes (high) & 51.1 \\
+DCT-LSB & 4,096 & ≈0.016 & Yes (moderate) & 38–42 \\
+DWT-DCT [cited] & ~4,096 & ≈0.015 & Yes (low) & 40–44 \\
+Proposed LG-CISH & 5.322/image & 5.322 & None (coverless) & ∞ \\
 \hline
 \end{tabular}
 \end{table}
@@ -53,9 +53,9 @@ Proposed LG-CISH & 2.585/image & 2.585 & None (coverless) & ∞ \\
 \hline
 Message Length & Messages & Accuracy (%) & BER & Hash Match (%) & Avg Images \\
 \hline
-Short (≤50 chars) & 40 & 100.00 & 0.00e+00 & 100.00 & 118.1 \\
-Medium (50-200) & 40 & 100.00 & 0.00e+00 & 100.00 & 315.3 \\
-Long (200-1000) & 40 & 100.00 & 0.00e+00 & 100.00 & 821.8 \\
+Short (≤50 chars) & 40 & 100.00 & 0.00e+00 & 100.00 & 57.5 \\
+Medium (50-200) & 40 & 100.00 & 0.00e+00 & 100.00 & 153.2 \\
+Long (200-1000) & 40 & 100.00 & 0.00e+00 & 100.00 & 399.4 \\
 \hline
 \end{tabular}
 \end{table}
@@ -69,11 +69,11 @@ Long (200-1000) & 40 & 100.00 & 0.00e+00 & 100.00 & 821.8 \\
 \hline
 Stage & Time (ms) \\
 \hline
-Full encode (200-char msg) & 0.09 \\
-CLIP embedding (per image) & 34.59 \\
-Index recovery (388 images) & 11953.71 \\
-Full decode (388 images) & 12067.98 \\
-Decode per image (amortised) & 31.10 \\
+Full encode (200-char msg) & 0.04 \\
+CLIP embedding (per image) & 14.40 \\
+Index recovery (189 images) & 1829.78 \\
+Full decode (189 images) & 1806.81 \\
+Decode per image (amortised) & 9.56 \\
 \hline
 \end{tabular}
 \end{table}
@@ -87,24 +87,24 @@ Decode per image (amortised) & 31.10 \\
 \hline
 Attack & Accuracy (%) & BER & CLIP Margin & Top-1 Sim \\
 \hline
-No attack (baseline) & 100.00 & 0.00e+00 & 0.422 & 1.000 \\
-JPEG 90% & 100.00 & 0.00e+00 & 0.421 & 1.000 \\
-JPEG 70% & 100.00 & 0.00e+00 & 0.419 & 0.997 \\
-JPEG 50% & 100.00 & 0.00e+00 & 0.417 & 0.994 \\
-JPEG 30% & 100.00 & 0.00e+00 & 0.412 & 0.989 \\
-Gaussian σ=5 & 100.00 & 0.00e+00 & 0.423 & 0.998 \\
-Gaussian σ=10 & 100.00 & 0.00e+00 & 0.420 & 0.993 \\
-Gaussian σ=20 & 100.00 & 0.00e+00 & 0.410 & 0.985 \\
-Gaussian σ=30 & 100.00 & 0.00e+00 & 0.402 & 0.980 \\
-Salt & Pepper 0.01 & 100.00 & 0.00e+00 & 0.423 & 0.996 \\
-Salt & Pepper 0.05 & 100.00 & 0.00e+00 & 0.416 & 0.984 \\
-Salt & Pepper 0.10 & 100.00 & 0.00e+00 & 0.407 & 0.976 \\
-Resize 50% & 100.00 & 0.00e+00 & 0.417 & 0.999 \\
-Resize 25% & 100.00 & 0.00e+00 & 0.408 & 0.995 \\
-Crop 90% & 100.00 & 0.00e+00 & 0.400 & 0.983 \\
-Crop 80% & 100.00 & 0.00e+00 & 0.379 & 0.967 \\
-Crop 70% & 100.00 & 0.00e+00 & 0.356 & 0.945 \\
-PNG→WebP 80 & 100.00 & 0.00e+00 & 0.419 & 0.998 \\
+No attack (baseline) & 100.00 & 0.00e+00 & 0.302 & 1.000 \\
+JPEG 90% & 100.00 & 0.00e+00 & 0.299 & 0.985 \\
+JPEG 70% & 100.00 & 0.00e+00 & 0.294 & 0.976 \\
+JPEG 50% & 100.00 & 0.00e+00 & 0.289 & 0.961 \\
+JPEG 30% & 100.00 & 0.00e+00 & 0.280 & 0.942 \\
+Gaussian σ=5 & 100.00 & 0.00e+00 & 0.293 & 0.986 \\
+Gaussian σ=10 & 100.00 & 0.00e+00 & 0.285 & 0.974 \\
+Gaussian σ=20 & 100.00 & 0.00e+00 & 0.272 & 0.957 \\
+Gaussian σ=30 & 100.00 & 0.00e+00 & 0.260 & 0.942 \\
+Salt & Pepper 0.01 & 100.00 & 0.00e+00 & 0.277 & 0.960 \\
+Salt & Pepper 0.05 & 100.00 & 0.00e+00 & 0.246 & 0.922 \\
+Salt & Pepper 0.10 & 100.00 & 0.00e+00 & 0.214 & 0.882 \\
+Resize 50% & 100.00 & 0.00e+00 & 0.282 & 0.982 \\
+Resize 25% & 100.00 & 0.00e+00 & 0.246 & 0.939 \\
+Crop 95% & 100.00 & 0.00e+00 & 0.280 & 0.979 \\
+Crop 90% & 100.00 & 0.00e+00 & 0.268 & 0.969 \\
+Crop 85% & 100.00 & 0.00e+00 & 0.261 & 0.961 \\
+PNG→WebP 80 & 100.00 & 0.00e+00 & 0.295 & 0.976 \\
 \hline
 \end{tabular}
 \end{table}
@@ -118,9 +118,9 @@ PNG→WebP 80 & 100.00 & 0.00e+00 & 0.419 & 0.998 \\
 \hline
 Component & Size \\
 \hline
-Codebook orderings & 6! ≈ 2^9.5 \\
+Codebook orderings & 40! ≈ 2^159.2 \\
 AES-256 key & 2^256 \\
-Combined & ≈ 2^265.5 \\
+Combined & ≈ 2^415.2 \\
 \hline
 \end{tabular}
 \end{table}
@@ -128,15 +128,15 @@ Combined & ≈ 2^265.5 \\
 
 \begin{table}[htbp]
 \centering
-\caption{Table 4.5 — Chi-square steganalysis detection. ~50% means the detector cannot do better than guessing (undetectable). N=24 patches.}
+\caption{Table 4.5 — Chi-square steganalysis detection. ~50% means the detector cannot do better than guessing (undetectable). N=20 patches.}
 \label{tab:table_4_5_steganalysis}
 \begin{tabular}{lccc}
 \hline
 Method & Detection Acc (%) & TPR (%) & TNR (%) \\
 \hline
-LSB & 87.5 & 75.0 & 100.0 \\
-DCT-LSB & 58.3 & 16.7 & 100.0 \\
-Proposed LG-CISH & 54.2 & 8.3 & 100.0 \\
+LSB & 97.5 & 100.0 & 95.0 \\
+DCT-LSB & 47.5 & 0.0 & 95.0 \\
+Proposed LG-CISH & 47.5 & 0.0 & 95.0 \\
 \hline
 \end{tabular}
 \end{table}
@@ -150,11 +150,11 @@ Proposed LG-CISH & 54.2 & 8.3 & 100.0 \\
 \hline
 Variant & Clean Acc (%) & JPEG50 Acc (%) & Crop40 Acc (%) & Avg Images & Integrity \\
 \hline
-Full LG-CISH (proposed) & 100.00 & 100.0 & 100.0 & 276.5 & CRC-32 \\
-Without CLIP (pHash NN) & 100.0 & 100.0 & 0.0 & 276.5 & CRC-32 \\
-Without compression & 100.00 & 100.0 & 100.0 & 374.5 & CRC-32 \\
-Without CRC integrity & 100.00 & 100.0 & 100.0 & 276.5 & None (silent) \\
-Fixed-chunk (2-bit) & 100.00 & 100.0 & 100.0 & 356.5 & CRC-32 \\
+Full LG-CISH (proposed) & 100.00 & 100.0 & 0.0 & 134.4 & CRC-32 \\
+Without CLIP (pHash NN) & 100.0 & 100.0 & 0.0 & 134.4 & CRC-32 \\
+Without compression & 100.00 & 100.0 & 0.0 & 182.2 & CRC-32 \\
+Without CRC integrity & 100.00 & 100.0 & 0.0 & 134.4 & None (silent) \\
+Fixed-chunk (5-bit) & 100.00 & 100.0 & 0.0 & 143.0 & CRC-32 \\
 \hline
 \end{tabular}
 \end{table}
@@ -168,11 +168,11 @@ Fixed-chunk (2-bit) & 100.00 & 100.0 & 100.0 & 356.5 & CRC-32 \\
 \hline
 Method & Capacity (bits) & JPEG50 Acc (%) & Detection (%) & Time & PSNR (dB) \\
 \hline
-LSB & 786,432 & 49.5 & 88 & 0.01–1 & 51.1 \\
-DCT-LSB & ~4096 & 44.6 & ~70–90 [cited] & 1–5 & 38–42 \\
+LSB & 786,432 & 51.4 & 98 & 0.01–1 & 51.1 \\
+DCT-LSB & ~4096 & 42.1 & ~70–90 [cited] & 1–5 & 38–42 \\
 DWT-DCT [cited] & ~4096 & ~85 [cited] & ~60–80 [cited] & ~50 & 40–44 \\
 Coverless [cited] & low & ~95 [cited] & ~50 [cited] & high & ∞ \\
-Proposed LG-CISH & 2.585/img & 100.0 & 54 & fast & ∞ \\
+Proposed LG-CISH & 5.322/img & 100.0 & 48 & fast & ∞ \\
 \hline
 \end{tabular}
 \end{table}
@@ -187,9 +187,9 @@ Proposed LG-CISH & 2.585/img & 100.0 & 54 & fast & ∞ \\
 Group & JPEG50 Accuracy (%) & Std \\
 \hline
 Proposed LG-CISH (CLIP) & 100.00 & 0.00 \\
-LSB baseline & 50.25 & 1.06 \\
-Welch t-statistic & 327.70 &  \\
-p-value & 1.590e-83 & YES (p < 0.05) \\
+LSB baseline & 50.17 & 1.19 \\
+Welch t-statistic & 293.57 &  \\
+p-value & 3.471e-81 & YES (p < 0.05) \\
 \hline
 \end{tabular}
 \end{table}
@@ -205,8 +205,8 @@ Metric & Mean ± Std & 95% CI \\
 \hline
 Reconstruction Accuracy (%) & 100.00 ± 0.00 & [100.00, 100.00] \\
 Bit Error Rate & 0.00e+00 ± 0.00e+00 & [0.00e+00, 0.00e+00] \\
-CLIP margin & 0.4223 ± 0.0016 & [0.4218, 0.4227] \\
-Images per message & 372.3 ± 91.5 & [346.1, 398.6] \\
+CLIP margin & 0.3020 ± 0.0059 & [0.3003, 0.3037] \\
+Images per message & 181.2 ± 44.5 & [168.5, 194.0] \\
 \hline
 \end{tabular}
 \end{table}

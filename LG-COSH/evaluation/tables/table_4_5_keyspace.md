@@ -2,6 +2,6 @@
 
 | Component | Size |
 | --- | --- |
-| Codebook orderings | 6! ≈ 2^9.5 |
+| Codebook orderings | 40! ≈ 2^159.2 |
 | AES-256 key | 2^256 |
-| Combined | ≈ 2^265.5 |
+| Combined | ≈ 2^415.2 |
