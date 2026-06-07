@@ -9,12 +9,12 @@ MIN_CLIP_DISTANCE = 0.85  # max cosine similarity allowed between any two codebo
 CODEBOOK_PATH = os.path.join(os.path.dirname(__file__), "data", "codebook.npz")
 
 # --- Image Database ---
-# Combined fixed-size database: the 24-image Kodak Lossless True Color suite plus
-# a 6-image curated DIV2K subset (30 images total), each resized to a fixed
-# 512x512 canvas. With N images the codebook encodes log2(N) bits per image via
-# base-N positional coding (see encoder/encode.py). Rebuild the image folder with
-# dataset/build_combined.py.
-DATASET_NAME = "Kodak (24) + DIV2K (6) — 30 images @ 512x512"
+# Combined fixed-size database drawn from standard image-processing benchmark
+# suites (UCID, Kodak, DIV2K), each image normalized to a fixed 512x512 PNG. With
+# N images the codebook encodes log2(N) bits per image via base-N positional
+# coding (see encoder/encode.py). Normalize the image folder with
+# dataset/normalize.py, then rebuild with `python main.py build`.
+DATASET_NAME = "UCID + Kodak + DIV2K (mixed) — 512x512 PNG"
 DATASET_TRAIN_URL = "http://data.vision.ee.ethz.ch/cvl/DIV2K/DIV2K_train_HR.zip"
 DATASET_VALID_URL = "http://data.vision.ee.ethz.ch/cvl/DIV2K/DIV2K_valid_HR.zip"
 # repo-root images/ (LG-COSH/.. -> project root -> images)

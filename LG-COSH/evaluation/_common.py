@@ -169,9 +169,9 @@ def attack_suite():
         ("Salt & Pepper 0.10", lambda im: atk_salt_pepper(im, 0.10)),
         ("Resize 50%", lambda im: atk_resize(im, 0.5)),
         ("Resize 25%", lambda im: atk_resize(im, 0.25)),
+        ("Crop 95%", lambda im: atk_crop(im, 0.95)),
         ("Crop 90%", lambda im: atk_crop(im, 0.90)),
-        ("Crop 80%", lambda im: atk_crop(im, 0.80)),
-        ("Crop 70%", lambda im: atk_crop(im, 0.70)),
+        ("Crop 85%", lambda im: atk_crop(im, 0.85)),
         ("PNG→WebP 80", lambda im: atk_webp(im, 80)),
     ]
 
