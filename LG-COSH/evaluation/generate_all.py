@@ -107,8 +107,8 @@ def main():
     # 4.6
     w("\n## 4.6 Ablation Study\n")
     w(r_abl["table"])
-    w(f"\nBoth CLIP and pHash decode JPEG-50 perfectly on this maximally-separated "
-      f"codebook, but under the harsher Crop-40% attack the semantic CLIP matcher "
+    w(f"\nBoth CLIP and pHash decode JPEG-50 perfectly on the 40-image "
+      f"codebook, but under the harsher Crop-65% attack the semantic CLIP matcher "
       f"holds at {r_abl['clip_crop40']:.0f}% while pHash collapses to "
       f"{r_abl['phash_crop40']:.0f}% — the geometric robustness that motivates CLIP. "
       f"The coding ablations show clear effects: disabling compression inflates the "

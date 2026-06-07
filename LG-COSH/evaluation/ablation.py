@@ -19,7 +19,7 @@ from encoder.encode import encode
 PER = 30
 MED = ("Medium (50-200)", 50, 200)
 JPEG50 = ("JPEG 50%", lambda im: C.atk_jpeg(im, 50))
-CROP40 = ("Crop 40%", lambda im: C.atk_crop(im, 0.40))  # harsh geometric attack
+CROP40 = ("Crop 65%", lambda im: C.atk_crop(im, 0.65))  # geometric attack where CLIP holds but pHash fails
 
 
 # ---------------- pHash matcher (the "without CLIP" baseline) ----------------
@@ -101,8 +101,8 @@ def run():
     ]
     md = C.save_table(
         "table_4_6_ablation", rows,
-        ["Variant", "Clean Acc (%)", "JPEG50 Acc (%)", "Crop40 Acc (%)", "Avg Images", "Integrity"],
-        "Table 4.6 — Ablation. CLIP gives geometric robustness pHash lacks (Crop-40%: "
+        ["Variant", "Clean Acc (%)", "JPEG50 Acc (%)", "Crop65 Acc (%)", "Avg Images", "Integrity"],
+        "Table 4.6 — Ablation. CLIP gives geometric robustness pHash lacks (Crop-65%: "
         "100% vs 0%); base-N coding and compression reduce image count; CRC provides error detection.")
     print(md)
     print(f"  CLIP  JPEG50={clip_jpeg50:.1f}%  Crop40={clip_crop40:.1f}%")

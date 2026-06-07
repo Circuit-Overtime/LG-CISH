@@ -100,7 +100,7 @@ def run():
     # --- SECONDARY (honest): CLIP vs pHash under a harsh attack ---
     import ablation as A
     cb_hashes = A.phash_codebook(cb)
-    harsh = ("Crop 40%", lambda im: C.atk_crop(im, 0.40))
+    harsh = ("Crop 65%", lambda im: C.atk_crop(im, 0.65))
     src_h = C.attacked_source_embeddings(cb, harsh[1])
     ph, mh, th = C.source_lookup(src_h, cb["embeddings"])
     clip_h = np.mean([1.0 if C.evaluate_message_fast(m, cb, ph, mh, th)["exact"] else 0.0 for m in msgs])
