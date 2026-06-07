@@ -9,10 +9,12 @@ All experiments use the LG-CISH codebook of 40 visually-distinct images drawn fr
 
 | Parameter | Value |
 | --- | --- |
-| Dataset | UCID + Kodak + DIV2K (mixed) — 512x512 PNG |
+| Dataset | UCID + Kodak + USC-SIPI (mixed) — 512x512 PNG |
 | Codebook images (N) | 40 |
 | Capacity | 5.322 bits/image (base-40) |
 | CLIP model | ViT-B/32 (dim 512) |
+| LLM (plausibility / aliases) | gemini-fast (Gemini 2.5 Flash Lite, vision) + flux (image gen) |
+| Coding modes | base-N (5.322 b/img) | permutation (no-repeat, distinct images) |
 | Min CLIP separation threshold | 0.85 |
 | Codebook pairwise sim (min/mean/max) | 0.305 / 0.513 / 0.827 |
 | Decoding margin (1 - max sim) | 0.173 |
@@ -85,11 +87,11 @@ The 40 codebook images are mutually well-separated in CLIP space (max pairwise s
 
 | Stage | Time (ms) |
 | --- | --- |
-| Full encode (200-char msg) | 0.04 |
-| CLIP embedding (per image) | 16.87 |
-| Index recovery (189 images) | 2122.03 |
-| Full decode (189 images) | 1980.29 |
-| Decode per image (amortised) | 10.48 |
+| Full encode (200-char msg) | 0.05 |
+| CLIP embedding (per image) | 14.92 |
+| Index recovery (189 images) | 1853.30 |
+| Full decode (189 images) | 1834.57 |
+| Decode per image (amortised) | 9.71 |
 
 
 
@@ -144,6 +146,20 @@ The CLIP margin starts at 0.302 and remains positive through most attacks; JPEG-
 
 
 Keyspace ≈ 2^415 (codebook orderings × AES-256). CRC-32 catches **100.00%** of bit-flip tampering. Because the transmitted images are unmodified natural images, the chi-square detector operates at chance (~50%) for the proposed method, versus near-certain detection for LSB.
+
+
+### 4.5.1 Cover Plausibility
+
+**Table 4.5b — Cover plausibility (gemini-fast judge, 0–1). Plausibility is driven by codebook theme, not the coding mode: a themed database is far more plausible than the diverse benchmark set, while permutation coding leaves the score essentially unchanged. We use the diverse benchmark for all other results (credibility) and report this as an explicit deployment trade-off.**
+
+| Configuration | LLM plausibility (0–1) | Note |
+| --- | --- | --- |
+| Diverse benchmark codebook (UCID/Kodak/USC) | 0.12 ± 0.04 | max dataset credibility; mixed subjects look random |
+| Themed codebook (coherent context) | 0.88 ± 0.07 | looks like an ordinary personal album |
+| Diverse + permutation coding | 0.18 ± 0.10 | codec barely moves the score |
+
+
+Beyond statistical undetectability, behavioural stealth depends on whether the image *set* looks natural. An LLM judge (gemini-fast) rates the diverse benchmark codebook at **0.12** but a themed codebook at **0.88** — plausibility is governed by codebook *theme*, not the codec (permutation coding scores 0.18, essentially unchanged). We deliberately use the diverse standard-benchmark set for all quantitative results (dataset credibility) and treat codebook theme as an explicit deployment trade-off: a themed database is the more plausible real-world cover.
 
 
 ## 4.6 Ablation Study
@@ -203,14 +219,15 @@ On the distortion–capacity axis, the pixel baselines trade quality for payload
 
 
 
-**Table 4.8b — Robustness of the proposed method vs. LSB under JPEG-50 (Welch t-test).**
+**Table 4.8b — Significance of CLIP's robustness over the pHash matcher: paired Wilcoxon signed-rank across all channel attacks (proposed-vs-LSB @ JPEG-50 shown descriptively, as the lossless method is deterministic).**
 
-| Group | JPEG50 Accuracy (%) | Std |
+| Group | Accuracy (%) | Std / note |
 | --- | --- | --- |
-| Proposed LG-CISH (CLIP) | 100.00 | 0.00 |
-| LSB baseline | 50.17 | 1.19 |
-| Welch t-statistic | 293.57 |  |
-| p-value | 3.471e-81 | YES (p < 0.05) |
+| Proposed (CLIP) — mean over attacks | 96.0 | 17.4 |
+| pHash ablation — mean over attacks | 90.0 | 30.0 |
+| Wilcoxon W (paired, N=20 attacks) | 5.0 |  |
+| p-value (one-sided, CLIP > pHash) | 1.382e-01 | no |
+| [ref] Proposed vs LSB @ JPEG-50 | 100 vs 50 | descriptive |
 
 
-The proposed method is bit-exact under JPEG-50 (100%) whereas LSB collapses to 50.2% bit accuracy; the difference is statistically significant (p < 0.05) (Welch t-test, p = 3.47e-81). Under a harsher Crop 65% attack the semantic CLIP matcher still outperforms the pHash ablation (100% vs 0%). One-way ANOVA across message-length buckets shows the CLIP margin is homogeneous (F = 1.99, p = 0.15).
+The proposed method is lossless, so its clean- and mild-channel accuracy is a deterministic 100% (zero variance); we therefore report the proposed-vs-LSB comparison descriptively — bit-exact at JPEG-50 (100%) versus LSB's 50.2% bit accuracy — and run the significance test on a variance-bearing, like-for-like metric: CLIP versus the pHash matcher across all 20 channel attacks. CLIP averages 96.0% decoding accuracy against pHash's 90.0%, a difference that is not statistically significant at this sample size (paired Wilcoxon signed-rank, p = 1.38e-01); the gap is starkest under geometric attacks such as Crop 65% (100% vs 0%). One-way ANOVA across message-length buckets shows the CLIP margin is homogeneous (F = 1.99, p = 0.15).

@@ -1,8 +1,9 @@
-**Table 4.8b — Robustness of the proposed method vs. LSB under JPEG-50 (Welch t-test).**
+**Table 4.8b — Significance of CLIP's robustness over the pHash matcher: paired Wilcoxon signed-rank across all channel attacks (proposed-vs-LSB @ JPEG-50 shown descriptively, as the lossless method is deterministic).**
 
-| Group | JPEG50 Accuracy (%) | Std |
+| Group | Accuracy (%) | Std / note |
 | --- | --- | --- |
-| Proposed LG-CISH (CLIP) | 100.00 | 0.00 |
-| LSB baseline | 50.17 | 1.19 |
-| Welch t-statistic | 293.57 |  |
-| p-value | 3.471e-81 | YES (p < 0.05) |
+| Proposed (CLIP) — mean over attacks | 96.0 | 17.4 |
+| pHash ablation — mean over attacks | 90.0 | 30.0 |
+| Wilcoxon W (paired, N=20 attacks) | 5.0 |  |
+| p-value (one-sided, CLIP > pHash) | 1.382e-01 | no |
+| [ref] Proposed vs LSB @ JPEG-50 | 100 vs 50 | descriptive |

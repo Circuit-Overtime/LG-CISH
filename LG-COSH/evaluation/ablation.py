@@ -105,8 +105,8 @@ def run():
         "Table 4.6 — Ablation. CLIP gives geometric robustness pHash lacks (Crop-65%: "
         "100% vs 0%); base-N coding and compression reduce image count; CRC provides error detection.")
     print(md)
-    print(f"  CLIP  JPEG50={clip_jpeg50:.1f}%  Crop40={clip_crop40:.1f}%")
-    print(f"  pHash JPEG50={phash_jpeg50:.1f}%  Crop40={phash_crop40:.1f}%")
+    print(f"  CLIP  JPEG50={clip_jpeg50:.1f}%  Crop65={clip_crop40:.1f}%")
+    print(f"  pHash JPEG50={phash_jpeg50:.1f}%  Crop65={phash_crop40:.1f}%")
     print(f"  Avg images  full={a_full:.1f}  no-compress={a_nocomp:.1f}  fixed-chunk={a_fixed:.1f}")
     return {"table": md, "clip_jpeg50": clip_jpeg50, "phash_jpeg50": phash_jpeg50,
             "clip_crop40": clip_crop40, "phash_crop40": phash_crop40,
