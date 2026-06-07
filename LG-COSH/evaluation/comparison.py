@@ -88,6 +88,57 @@ def graph_accuracy_vs_payload(cb):
     return out
 
 
+def graph_psnr_vs_bpp(cb):
+    """PSNR vs. embedding rate (BPP) — the distortion/capacity trade-off.
+
+    Pixel-domain baselines (LSB, DCT-LSB) inject distortion that grows with the
+    payload, so their PSNR falls as bits-per-pixel rises. The proposed coverless
+    method modifies no pixels, so its PSNR is infinite (no distortion) at every
+    payload — drawn as a flat ceiling line. A 45 dB reference marks the usual
+    'perceptually transparent' threshold.
+    """
+    cover = np.asarray(Image.open(cb["paths"][0]).convert("RGB"))
+    h, w = cover.shape[:2]
+    npix = h * w
+    rng = random.Random(C.SEED)
+
+    # LSB has large capacity: sweep BPP across the 0.05–0.5 band of interest.
+    lsb_bpp = [0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5]
+    lsb_psnr = []
+    for bpp in lsb_bpp:
+        nbits = int(bpp * npix)
+        bits = "".join(rng.choice("01") for _ in range(nbits))
+        lsb_psnr.append(B.psnr(cover, B.lsb_embed(cover, bits)))
+
+    # DCT-LSB capacity is 1 bit / 64 px (one coeff per 8x8 block) -> max BPP ~0.0156.
+    dct_cap = B.dct_capacity_bits(cover.shape)
+    dct_bpp, dct_psnr = [], []
+    for frac in (0.25, 0.5, 0.75, 1.0):
+        nbits = max(1, int(dct_cap * frac))
+        bits = "".join(rng.choice("01") for _ in range(nbits))
+        dct_bpp.append(nbits / npix)
+        dct_psnr.append(B.psnr(cover, B.dct_embed(cover, bits)))
+
+    ceiling = 65.0  # display height for the (infinite) proposed-method PSNR
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.plot(lsb_bpp, lsb_psnr, "s--", color="tab:orange", label="LSB")
+    ax.plot(dct_bpp, dct_psnr, "^--", color="tab:red", label="DCT-LSB")
+    ax.axhline(ceiling, color="tab:green", linewidth=2,
+               label="Proposed LG-CISH (∞ — no distortion)")
+    ax.axhline(45, ls=":", color="gray", label="45 dB transparency threshold")
+    ax.annotate("∞", xy=(0.5, ceiling), xytext=(0.5, ceiling - 2.5),
+                ha="center", color="tab:green", fontsize=13, fontweight="bold")
+    ax.set_xlabel("Embedding rate (bits per pixel)")
+    ax.set_ylabel("PSNR (dB)")
+    ax.set_title("Distortion vs. payload: LG-CISH is lossless at every rate")
+    ax.set_xlim(-0.02, 0.55); ax.set_ylim(30, ceiling + 3)
+    ax.grid(alpha=0.3); ax.legend(loc="lower left", fontsize=8)
+    out = f"{C.FIG_DIR}/fig_4_7_psnr_bpp.png"
+    fig.tight_layout(); fig.savefig(out, dpi=150); plt.close(fig)
+    return out, {"lsb_bpp": lsb_bpp, "lsb_psnr": lsb_psnr,
+                 "dct_bpp": dct_bpp, "dct_psnr": dct_psnr}
+
+
 def graph_detection(detection):
     fig, ax = plt.subplots(figsize=(6, 4))
     methods = list(detection.keys()); vals = list(detection.values())
@@ -128,6 +179,7 @@ def run(detection=None):
     cb = C.get_codebook()
     rob_fig, rob = graph_robustness(cb)
     pay_fig = graph_accuracy_vs_payload(cb)
+    psnr_fig, psnr_bpp = graph_psnr_vs_bpp(cb)
 
     if detection is None:
         # quick local detection estimate via baselines on patches
@@ -143,9 +195,9 @@ def run(detection=None):
     det_fig = graph_detection(detection)
     cmp_md = comparison_table(cb, rob, detection)
     print(cmp_md)
-    print(f"  Figures: {rob_fig}\n           {pay_fig}\n           {det_fig}")
-    return {"table": cmp_md, "robustness_curve": rob,
-            "figures": [rob_fig, pay_fig, det_fig], "detection": detection}
+    print(f"  Figures: {rob_fig}\n           {pay_fig}\n           {psnr_fig}\n           {det_fig}")
+    return {"table": cmp_md, "robustness_curve": rob, "psnr_bpp": psnr_bpp,
+            "figures": [rob_fig, pay_fig, psnr_fig, det_fig], "detection": detection}
 
 
 if __name__ == "__main__":
