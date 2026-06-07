@@ -70,12 +70,17 @@ cropping---unlike perceptual hashing. Second, base-$N$ positional coding treats
 the encrypted, integrity-protected payload as a single integer written in radix
 $N$, giving the information-theoretic $\log_2 N$ bits per image. A thin
 zlib/AES-256/CRC-32 layer adds compression, confidentiality, and tamper
-detection. On a proof-of-concept six-image DIV2K codebook, LG-CISH achieves
-bit-exact reconstruction (BER $=0$), $100\%$ accuracy across eighteen channel
-attacks (JPEG down to quality~30, noise, downscaling to $25\%$, centre-cropping to
-$70\%$), chance-level steganalysis detectability ($54.2\%$ vs.\ $87.5\%$ for LSB),
-and a statistically significant robustness advantage over pixel-domain baselines
-($p=1.6\times10^{-83}$). We analyse the capacity/undetectability trade-off and the
+detection, and two optional cover-shaping layers---a distinct-image
+\emph{permutation} mode and an LLM-guided \emph{alias} layer---reshape the cover
+without altering the encoded bits. On a 40-image codebook drawn from the UCID,
+Kodak, and USC-SIPI benchmark suites ($5.322$ bits/image), LG-CISH achieves
+bit-exact reconstruction (BER $=0$), $100\%$ accuracy across twenty-one channel
+attacks (JPEG down to quality~20, noise, downscaling to $25\%$, centre-cropping to
+$60\%$, and WebP conversion), chance-level steganalysis detectability ($47.5\%$
+vs.\ $97.5\%$ for LSB), and a statistically significant geometric-robustness
+advantage over perceptual hashing (paired Wilcoxon signed-rank,
+$p=7.8\times10^{-3}$). We further quantify cover plausibility with an LLM judge,
+and analyse the capacity/undetectability and theme/plausibility trade-offs and the
 database-bound capacity limit of the coverless paradigm.
 \end{abstract}
 
@@ -132,13 +137,18 @@ detection on top of the steganographic channel.
 base-$N$ positional coding, raising the per-image capacity from the
 $\lfloor\log_2 N\rfloor$ bits of fixed-chunk coding to the information-theoretic
 $\log_2 N$ bits (Section~\ref{sec:method}).
-(ii) A reproducible evaluation suite reporting reconstruction accuracy, bit error
-rate, robustness to eight attack families, statistical steganalysis resistance,
-an ablation isolating each component, a baseline comparison, and statistical
-significance tests (Section~\ref{sec:results}).
-(iii) An honest analysis of the capacity/undetectability trade-off and of the
-database-bound capacity limit inherent to coverless selection
-(Section~\ref{sec:discussion}).
+(ii) Two optional, loss\-less cover-shaping layers: a distinct-image
+\emph{permutation} (Lehmer) coding mode that eliminates repeated images at a small
+capacity cost, and an LLM-guided \emph{alias} layer that substitutes
+interchangeable cover images without changing the encoded bits
+(Section~\ref{sec:method}).
+(iii) A reproducible evaluation suite reporting reconstruction accuracy, bit error
+rate, robustness to twenty-one channel attacks, statistical steganalysis
+resistance, an LLM-judged cover-plausibility study, an ablation isolating each
+component, a baseline comparison, and significance tests (Section~\ref{sec:results}).
+(iv) An honest analysis of the capacity/undetectability and theme/plausibility
+trade-offs and of the database-bound capacity limit inherent to coverless
+selection (Section~\ref{sec:discussion}).
 
 % -------------------------------------------------------------------
 \section{Related Work}\label{sec:related}
@@ -220,8 +230,8 @@ capacity is
   C=\log_2 N \ \ \text{bits/image}.
   \label{eq:cap}
 \end{equation}
-For $N{=}6$, $C\approx2.585$ bits/image, strictly more than the
-$\lfloor\log_2 N\rfloor=2$ bits of fixed-chunk coding. Given a payload byte string
+For $N{=}40$, $C\approx5.322$ bits/image, strictly more than the
+$\lfloor\log_2 N\rfloor=5$ bits of fixed-chunk coding. Given a payload byte string
 $p$ we form a non-negative integer with a sentinel byte $\mathtt{0x01}$ prepended
 to preserve leading zeros,
 \begin{equation}
