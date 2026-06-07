@@ -20,16 +20,26 @@ def heatmap():
     M = cb["embeddings"]
     S = M @ M.T
     n = S.shape[0]
-    fig, ax = plt.subplots(figsize=(5, 4.2))
-    im = ax.imshow(S, cmap="viridis", vmin=S.min(), vmax=1.0)
-    for i in range(n):
-        for j in range(n):
-            ax.text(j, i, f"{S[i,j]:.2f}", ha="center", va="center",
-                    color="white" if S[i, j] < 0.8 else "black", fontsize=8)
-    ax.set_xticks(range(n)); ax.set_yticks(range(n))
+    off = S[~np.eye(n, dtype=bool)]
+    annotate = n <= 12                       # per-cell numbers only read well for small N
+    sz = max(6.0, 0.16 * n)                  # grow the canvas with the codebook
+    fig, ax = plt.subplots(figsize=(sz + 1.2, sz))
+    im = ax.imshow(S, cmap="viridis", vmin=float(off.min()), vmax=1.0)
+    if annotate:
+        for i in range(n):
+            for j in range(n):
+                ax.text(j, i, f"{S[i,j]:.2f}", ha="center", va="center",
+                        color="white" if S[i, j] < 0.8 else "black", fontsize=8)
+    # sparse, readable ticks (~every 5th index)
+    step = 1 if n <= 20 else 5
+    ticks = list(range(0, n, step))
+    ax.set_xticks(ticks); ax.set_yticks(ticks)
+    ax.tick_params(labelsize=8)
     ax.set_xlabel("Codebook image index"); ax.set_ylabel("Codebook image index")
-    ax.set_title("CLIP pairwise cosine similarity (codebook separation)")
-    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    ax.set_title(f"CLIP pairwise cosine similarity ($N={n}$ codebook, "
+                 f"max off-diagonal {off.max():.3f} $<\\tau{{=}}0.85$)")
+    cb_ = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cb_.set_label("cosine similarity")
     out = f"{C.FIG_DIR}/fig_cb_heatmap.png"
     fig.tight_layout(); fig.savefig(out, dpi=150); plt.close(fig)
     print("saved", out)
