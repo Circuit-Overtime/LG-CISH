@@ -1,5 +1,6 @@
 % ===================================================================
 %  LG-CISH — Result Tables with Matching Figures (standalone).
+%  Layout: each table is immediately followed by its diagram (forced [H]).
 %  Build:  pdflatex lgcish_results.tex   (run twice)
 %  Figures pulled from ../LG-COSH/evaluation/figures/ (see \graphicspath).
 % ===================================================================
@@ -8,9 +9,9 @@
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{float}            % provides [H] = put it exactly here, no floating
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
-\usepackage[section]{placeins}
 
 \graphicspath{{../LG-COSH/evaluation/figures/}}
 
@@ -26,12 +27,12 @@
 \noindent All numbers are produced by the reproducible evaluation suite
 (\texttt{python evaluation/generate\_all.py}) on a codebook of $N{=}40$
 visually distinct $512{\times}512$ images (UCID\,/\,Kodak\,/\,USC-SIPI),
-$\log_2 40\approx5.322$ bits/image. Each table is shown with the figure that
-visualises it.
+$\log_2 40\approx5.322$ bits/image. \textbf{Each table is followed immediately by
+the figure that visualises it.}
 
 % ============================ 1. SETUP ============================
 \section{Experimental Setup}
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Experimental configuration.}\label{tab:setup}
 \begin{tabular}{@{}ll@{}}
@@ -53,18 +54,18 @@ Hardware & RTX 3050 6\,GB, 16-core CPU \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.74\linewidth]{fig_cb_heatmap.png}
-\caption{Pairwise CLIP cosine similarity of the $N{=}40$ codebook. All
-off-diagonal values stay below $\tau{=}0.85$ (max $0.827$), giving a positive
-separation margin for nearest-neighbour recovery (matches Table~\ref{tab:setup}).}
+\includegraphics[width=0.72\linewidth]{fig_cb_heatmap.png}
+\caption{(Table~\ref{tab:setup}) Pairwise CLIP cosine similarity of the $N{=}40$
+codebook. All off-diagonal values stay below $\tau{=}0.85$ (max $0.827$), giving a
+positive separation margin for nearest-neighbour recovery.}
 \label{fig:heatmap}
 \end{figure}
 
 % ============================ 2. QUALITATIVE ============================
 \section{Qualitative Results}
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=\linewidth]{fig_4_2_set1_encode.png}
 \caption{Figure Set 1 --- secret message $\to$ generated image sequence
@@ -72,7 +73,7 @@ separation margin for nearest-neighbour recovery (matches Table~\ref{tab:setup})
 \label{fig:set1}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=\linewidth]{fig_4_2_set2_decode.png}
 \caption{Figure Set 2 --- received sequence $\to$ CLIP nearest-neighbour decode;
@@ -80,7 +81,7 @@ original and reconstructed messages match exactly.}
 \label{fig:set2}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.9\linewidth]{fig_4_2_set3_failures.png}
 \caption{Figure Set 3 --- failure analysis. Accuracy collapses only under extreme
@@ -90,7 +91,7 @@ degradation; a codebook mismatch is rejected by CRC-32.}
 
 % ============================ 3. QUANTITATIVE ============================
 \section{Quantitative Evaluation}
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Reconstruction accuracy by message length (clean channel, 40 messages each).}\label{tab:recon}
 \begin{tabular}{@{}lccccc@{}}
@@ -104,7 +105,15 @@ Long (200--1000)      & 40 & 100.00 & $0$ & 100.00 & 399.4 \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.74\linewidth]{fig_4_7_accuracy_payload.png}
+\caption{(Table~\ref{tab:recon}) Reconstruction accuracy vs.\ payload length:
+$100\%$ across all sizes while the image count grows linearly.}
+\label{fig:payload}
+\end{figure}
+
+\begin{table}[H]
 \centering
 \caption{Payload capacity vs.\ distortion. LG-CISH trades raw capacity for zero distortion.}\label{tab:capacity}
 \begin{tabular}{@{}lcccc@{}}
@@ -119,7 +128,15 @@ DWT--DCT [cited]  & $\sim$4{,}096 & $\approx$0.015 & Yes (low)  & 40--44 \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{fig_4_7_psnr_bpp.png}
+\caption{(Table~\ref{tab:capacity}) Capacity (bits/pixel) vs.\ distortion (PSNR).
+LG-CISH sits at infinite PSNR --- no pixel is modified.}
+\label{fig:psnr}
+\end{figure}
+
+\begin{table}[H]
 \centering
 \caption{Coding modes. Permutation coding trades a little capacity for a no-repeat, more plausible cover.}\label{tab:coding}
 \begin{tabular}{@{}lcccl@{}}
@@ -134,16 +151,16 @@ Permutation (block $=40{=}N$) & 3.979 & 40 images & 40 & full permutation \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.66\linewidth]{fig_coding_modes.png}
-\caption{Capacity per image for base-$N$ vs.\ permutation coding at several block
-sizes (matches Table~\ref{tab:coding}). Smaller permutation blocks recover most of
-the base-$N$ ceiling while guaranteeing no in-block image repeats.}
+\includegraphics[width=0.64\linewidth]{fig_coding_modes.png}
+\caption{(Table~\ref{tab:coding}) Capacity per image for base-$N$ vs.\ permutation
+coding at several block sizes. Smaller blocks recover most of the base-$N$ ceiling
+while guaranteeing no in-block image repeats.}
 \label{fig:coding}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Computational time (mean over repeated runs, RTX 3050).}\label{tab:timing}
 \begin{tabular}{@{}lc@{}}
@@ -159,33 +176,17 @@ Decode per image (amortised)   & 9.61 \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.66\linewidth]{fig_timing.png}
-\caption{Per-stage timing on log scale (matches Table~\ref{tab:timing}). Encoding is
+\includegraphics[width=0.64\linewidth]{fig_timing.png}
+\caption{(Table~\ref{tab:timing}) Per-stage timing on log scale. Encoding is
 sub-millisecond; cost is dominated by CLIP embedding at decode.}
 \label{fig:timing}
 \end{figure}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.78\linewidth]{fig_4_7_accuracy_payload.png}
-\caption{Reconstruction accuracy vs.\ payload length: $100\%$ across all sizes
-while the image count grows linearly (matches Table~\ref{tab:recon}).}
-\label{fig:payload}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.74\linewidth]{fig_4_7_psnr_bpp.png}
-\caption{Capacity (bits/pixel) vs.\ distortion (PSNR). LG-CISH sits at infinite
-PSNR --- no pixel is modified (matches Table~\ref{tab:capacity}).}
-\label{fig:psnr}
-\end{figure}
-
 % ============================ 4. ROBUSTNESS ============================
 \section{Robustness Analysis}
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Robustness to all channel attacks (40 messages/attack).}\label{tab:robust}
 \begin{tabular}{@{}lcccc@{}}
@@ -217,25 +218,25 @@ PNG$\to$WebP 80        & 100.00 & $0$ & 0.295 & 0.976 \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.8\linewidth]{fig_margin_attacks.png}
-\caption{Mean decoding margin $\gamma=s_{(1)}-s_{(2)}$ per attack. All but the most
-extreme downscale leave $\gamma>0$ (matches Table~\ref{tab:robust}).}
+\includegraphics[width=0.78\linewidth]{fig_margin_attacks.png}
+\caption{(Table~\ref{tab:robust}) Mean decoding margin $\gamma=s_{(1)}-s_{(2)}$ per
+attack. All but the most extreme downscale leave $\gamma>0$.}
 \label{fig:marginatk}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.8\linewidth]{fig_4_7_robustness_jpeg.png}
-\caption{Decoding accuracy vs.\ JPEG quality: LG-CISH stays at $100\%$ where
-pixel-domain LSB/DCT collapse.}
+\includegraphics[width=0.78\linewidth]{fig_4_7_robustness_jpeg.png}
+\caption{(Table~\ref{tab:robust}) Decoding accuracy vs.\ JPEG quality: LG-CISH
+stays at $100\%$ where pixel-domain LSB/DCT collapse.}
 \label{fig:robjpeg}
 \end{figure}
 
 % ============================ 5. SECURITY ============================
 \section{Security and Steganalysis Resistance}
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Chi-square steganalysis detection ($\approx$50\% = chance). $N{=}20$ patches.}\label{tab:steg}
 \begin{tabular}{@{}lccc@{}}
@@ -249,7 +250,15 @@ DCT-LSB          & 47.5 & 0.0 & 95.0 \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.64\linewidth]{fig_4_7_detection.png}
+\caption{(Table~\ref{tab:steg}) Measured steganalysis detection rates (lower is
+stealthier). LG-CISH sits at the chance line, far below LSB.}
+\label{fig:detbar}
+\end{figure}
+
+\begin{table}[H]
 \centering
 \caption{Keyspace analysis ($N{=}40$).}\label{tab:keyspace}
 \begin{tabular}{@{}ll@{}}
@@ -263,7 +272,7 @@ Combined keyspace  & $\approx 2^{415.2}$ \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Cover plausibility (Gemini judge, 0--1). Plausibility is driven by codebook
 theme, not the coding mode.}\label{tab:plaus}
@@ -278,17 +287,9 @@ Diverse + permutation coding       & $0.18\pm0.10$ & codec barely moves the scor
 \end{tabular}
 \end{table}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.66\linewidth]{fig_4_7_detection.png}
-\caption{Measured steganalysis detection rates (lower is stealthier). LG-CISH sits
-at the chance line, far below LSB (matches Table~\ref{tab:steg}).}
-\label{fig:detbar}
-\end{figure}
-
 % ============================ 6. ABLATION ============================
 \section{Ablation Study}
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Ablation. Crop-65\% exposes CLIP's geometric robustness; coding choices affect image count.}\label{tab:ablation}
 \begin{tabular}{@{}lccccc@{}}
@@ -304,17 +305,17 @@ Fixed-chunk (5-bit)        & 100 & 100 & 100 & 143.0 & CRC-32 \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.9\linewidth]{fig_ablation_bar.png}
-\caption{Left: base-$N$ + zlib needs the fewest images. Right: under Crop-65\% CLIP
-keeps $100\%$ while pHash drops to $0\%$ (matches Table~\ref{tab:ablation}).}
+\includegraphics[width=0.88\linewidth]{fig_ablation_bar.png}
+\caption{(Table~\ref{tab:ablation}) Left: base-$N$ + zlib needs the fewest images.
+Right: under Crop-65\% CLIP keeps $100\%$ while pHash drops to $0\%$.}
 \label{fig:ablbar}
 \end{figure}
 
 % ============================ 7. COMPARISON ============================
 \section{Comparative Analysis}
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Comparison with classical and coverless baselines. Bracketed values are cited.}\label{tab:compare}
 \begin{tabular}{@{}lccccc@{}}
@@ -332,7 +333,7 @@ Coverless [cited]& low & [95] & [$\sim$50] & high & $\infty$ \\
 
 % ============================ 8. STATISTICS ============================
 \section{Statistical Validation}
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Mean $\pm$ std and 95\% confidence intervals over $N{=}50$ trials (clean channel).}\label{tab:stats}
 \begin{tabular}{@{}lcc@{}}
@@ -347,7 +348,7 @@ Images per message           & $181.2\pm44.5$  & $[168.5,194.0]$ \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Significance of CLIP's geometric robustness over pHash: paired Wilcoxon
 signed-rank across a 7-level crop sweep. Proposed-vs-LSB @ JPEG-50 shown descriptively.}\label{tab:signif}
