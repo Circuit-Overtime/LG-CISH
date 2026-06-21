@@ -134,6 +134,15 @@ Permutation (block $=40{=}N$) & 3.979 & 40 images & 40 & full permutation \\
 \end{tabular}
 \end{table}
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.66\linewidth]{fig_coding_modes.png}
+\caption{Capacity per image for base-$N$ vs.\ permutation coding at several block
+sizes (matches Table~\ref{tab:coding}). Smaller permutation blocks recover most of
+the base-$N$ ceiling while guaranteeing no in-block image repeats.}
+\label{fig:coding}
+\end{figure}
+
 \begin{table}[h]
 \centering
 \caption{Computational time (mean over repeated runs, RTX 3050).}\label{tab:timing}
@@ -149,6 +158,14 @@ Decode per image (amortised)   & 9.61 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.66\linewidth]{fig_timing.png}
+\caption{Per-stage timing on log scale (matches Table~\ref{tab:timing}). Encoding is
+sub-millisecond; cost is dominated by CLIP embedding at decode.}
+\label{fig:timing}
+\end{figure}
 
 \begin{figure}[h]
 \centering
