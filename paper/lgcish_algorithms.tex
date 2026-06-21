@@ -1,0 +1,235 @@
+% ===================================================================
+%  LG-CISH — Encoding & Decoding Algorithms (standalone).
+%  Build:  pdflatex lgcish_algorithms.tex   (run twice)
+%  Self-contained: no external class/package beyond a standard TeX Live install.
+% ===================================================================
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+% --- self-contained algorithm float + pseudocode environment ---------
+\usepackage{float}
+\floatstyle{ruled}
+\newfloat{algorithm}{tbp}{loa}
+\floatname{algorithm}{Algorithm}
+\newcounter{algln}
+\newenvironment{pseudo}{%
+  \begin{list}{\footnotesize\arabic{algln}:}{%
+    \usecounter{algln}%
+    \setlength{\leftmargin}{2.4em}\setlength{\labelwidth}{1.7em}%
+    \setlength{\labelsep}{0.4em}\setlength{\itemsep}{1.5pt}%
+    \setlength{\parsep}{0pt}\setlength{\topsep}{3pt}\small}%
+}{\end{list}}
+\newcommand{\kw}[1]{\textbf{#1}}
+\newcommand{\Ind}{\hspace*{1.3em}}
+\newcommand{\Indd}{\hspace*{2.6em}}
+\newcommand{\Cmt}[1]{\hfill{\footnotesize$\triangleright$\,\textit{#1}}}
+\newcommand{\concat}{\,\Vert\,}
+% ---------------------------------------------------------------------
+
+\title{\textbf{LG-CISH: Encoding and Decoding Algorithms}\\[2pt]
+\large Lossless Coverless Image Steganography via CLIP Semantic Hashing,\\
+Base-$N$ Positional and Lehmer-Permutation Coding}
+\author{Ayushman Bhattacharya \and Soumyashree Biswas \and Piyali Sarkar \and Harsh Raj}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Notation and Shared State}
+Sender and receiver share, offline, an image database, the CLIP image
+encoder~$\Phi$, and the resulting \emph{codebook}
+$\mathcal{C}=\{c_0,\dots,c_{N-1}\}$ of $N$ mutually distinct images
+($N{=}40$ in our deployment). Let $\Phi:\mathcal{X}\!\to\!\mathbb{R}^{d}$
+($d{=}512$). Each image $x$ is represented by its $\ell_2$-normalised embedding
+\begin{equation}
+  e(x)=\frac{\Phi(x)}{\lVert\Phi(x)\rVert_2},\qquad \lVert e(x)\rVert_2=1,
+  \label{eq:embed}
+\end{equation}
+and the similarity of two normalised embeddings is the cosine (inner) product
+\begin{equation}
+  s(a,b)=\langle a,b\rangle = a^{\!\top}b \in[-1,1].
+  \label{eq:cos}
+\end{equation}
+The codebook stores the matrix $\mathbf{C}\in\mathbb{R}^{N\times d}$ of row
+embeddings $\mathbf{C}_j=e(c_j)$. It is built so that all images are well
+separated, $\max_{i\neq j}s(\mathbf{C}_i,\mathbf{C}_j)\le\tau$ (we use
+$\tau{=}0.85$); Algorithm~\ref{alg:codebook} performs greedy pruning to enforce
+this.
+
+\begin{algorithm}[t]
+\caption{Codebook construction}\label{alg:codebook}
+\begin{pseudo}
+\item \kw{Input:} candidate image set $\mathcal{D}$, encoder $\Phi$, threshold $\tau$
+\item \kw{Output:} codebook $\mathbf{C}$, image paths, size $N$
+\item $E \gets [\,e(x)\ \text{for } x\in\mathcal{D}\,]$ \Cmt{Eq.~\eqref{eq:embed}}
+\item $\mathcal{K}\gets\emptyset$
+\item \kw{for} $j=0$ \kw{to} $|\mathcal{D}|-1$ \kw{do}
+\item \Ind \kw{if} $\max_{i\in\mathcal{K}} s(E_i,E_j)\le\tau$ \kw{then}
+           $\ \mathcal{K}\gets\mathcal{K}\cup\{j\}$
+\item \kw{end for}
+\item \kw{return} $\mathbf{C}\gets E[\mathcal{K}]$,\ \ paths$[\mathcal{K}]$,\ \ $N\gets|\mathcal{K}|$
+\end{pseudo}
+\end{algorithm}
+
+\section{Cryptographic Framing}
+Before coding, the message $M$ is compressed, integrity-tagged, and optionally
+encrypted. With $\textsc{zlib}$ the lossless compressor, $\textsc{crc32}$ the
+4-byte CRC, and $\textsc{aes}_\kappa$ AES-256-CBC under key $\kappa$ (a random
+16-byte IV is prepended to the ciphertext), the framed payload is
+\begin{equation}
+  p_0=\textsc{zlib}\!\big(\textsc{utf8}(M)\big),\qquad
+  f=\textsc{aes}_{\kappa}\!\big(p_0\concat \textsc{crc32}(p_0)\big),
+  \label{eq:wrap}
+\end{equation}
+where the AES step is identity when no key is supplied (CRC only). The inverse,
+$\textsc{unwrap}_\kappa$, decrypts, splits off the trailing CRC, and \emph{rejects}
+the message if the recomputed CRC disagrees (probability of an undetected error
+$\approx 2^{-32}$).
+
+\section{Channel 1: Base-$N$ Positional Coding}
+The codebook is a radix-$N$ alphabet, so the information-theoretic capacity is
+\begin{equation}
+  C_{\text{base}}=\log_2 N \quad\text{bits/image}
+  \qquad(N{=}40 \Rightarrow 5.322\ \text{bits/image}).
+  \label{eq:capbase}
+\end{equation}
+The framed bytes $f$ are mapped to a single non-negative integer with a
+$\mathtt{0x01}$ sentinel byte prepended to preserve leading zeros,
+\begin{equation}
+  v=\textsc{int}_{\mathrm{BE}}\!\big(\mathtt{0x01}\concat f\big),
+  \label{eq:int}
+\end{equation}
+then written in radix $N$ (most-significant digit first, always non-zero):
+\begin{equation}
+  v=\sum_{k=0}^{L-1} d_k\,N^{k},\quad d_k\in\{0,\dots,N-1\},\quad
+  L=\big\lfloor\log_N v\big\rfloor+1 .
+  \label{eq:digits}
+\end{equation}
+Digit $d_k$ selects codebook image $c_{d_k}$. The map
+$f\leftrightarrow(d_0,\dots,d_{L-1})$ is bijective, hence \emph{lossless}.
+Algorithm~\ref{alg:basen} gives the integer$\leftrightarrow$digit conversion.
+
+\begin{algorithm}[t]
+\caption{Base-$N$ integer coding: \textsc{toBaseN} / \textsc{fromBaseN}}\label{alg:basen}
+\begin{pseudo}
+\item \kw{function} \textsc{toBaseN}$(v,N)$
+\item \Ind $D\gets[\,]$;\ \ \kw{while} $v>0$:\ \ $D.\text{append}(v \bmod N)$;\ \ $v\gets\lfloor v/N\rfloor$
+\item \Ind \kw{return} \textsc{reverse}$(D)$ \Cmt{MSB first; Eq.~\eqref{eq:digits}}
+\item \kw{function} \textsc{fromBaseN}$(D,N)$
+\item \Ind $v\gets 0$;\ \ \kw{for} $d$ \kw{in} $D$:\ \ $v\gets vN+d$
+\item \Ind \kw{return} $v$
+\end{pseudo}
+\end{algorithm}
+
+\section{Channel 2: Lehmer-Permutation Coding}
+Base-$N$ coding reaches the $L\log_2 N$ ceiling but lets digits (images)
+\emph{repeat}, which can make a cover look unnatural. Permutation coding instead
+emits, per block of $B$ images, $B$ \emph{distinct} codebook images selected
+without repetition. A block carries
+\begin{equation}
+  C_{\text{perm}}=\frac{1}{B}\log_2 P(N,B),\qquad
+  P(N,B)=\frac{N!}{(N-B)!}=\prod_{t=0}^{B-1}(N-t),
+  \label{eq:perm}
+\end{equation}
+bits/image (e.g.\ $N{=}40,B{=}8\Rightarrow5.187$; $B{=}N\Rightarrow3.979$). Within a
+block, the $t$-th image is identified by its \emph{rank} $r_t$ among the still
+available images (mixed-radix / Lehmer code with radix $N-t$):
+\begin{equation}
+  u=\sum_{t=0}^{B-1} r_t \!\!\prod_{j=t+1}^{B-1}\!\!(N-j),\qquad 0\le r_t<N-t .
+  \label{eq:lehmer}
+\end{equation}
+The whole integer $v$ (Eq.~\eqref{eq:int}) is first written in radix
+$m=P(N,B)$, giving block values $(e_0,\dots,e_{L'-1})$. Each block value is
+\emph{whitened} by a deterministic shared keystream to avoid a tell-tale sorted
+prefix from the Lehmer leading-zero artifact:
+\begin{equation}
+  \tilde e_i=\big(e_i+\mu_i\big)\bmod m,\qquad
+  \mu_i=\textsc{sha256}\big(\text{``LG\text{-}CISH\text{-}perm\text{-}whiten\text{-}}i\text{''}\big)\bmod m .
+  \label{eq:whiten}
+\end{equation}
+Whitening is invertible $\bmod\,m$ and within-block distinctness is preserved, so
+the channel stays lossless. Algorithm~\ref{alg:lehmer} encodes/decodes one block.
+
+\begin{algorithm}[t]
+\caption{Lehmer block coding: \textsc{permEncode} / \textsc{permDecode}}\label{alg:lehmer}
+\begin{pseudo}
+\item \kw{function} \textsc{permEncode}$(u,N,B)$ \Cmt{integer $\to$ $B$ distinct indices}
+\item \Ind \kw{for} $t=B-1$ \kw{down to} $0$:\ \ $r_t\gets u\bmod(N-t)$;\ \ $u\gets\lfloor u/(N-t)\rfloor$
+\item \Ind $A\gets[0,1,\dots,N-1]$;\ \ \kw{return} $[\,A.\text{pop}(r_t)\ \text{for}\ t=0\dots B-1\,]$
+\item \kw{function} \textsc{permDecode}$(\langle a_0,\dots,a_{B-1}\rangle,N)$ \Cmt{indices $\to$ integer}
+\item \Ind $A\gets[0,\dots,N-1]$;\ \ $u\gets0$
+\item \Ind \kw{for} $t=0$ \kw{to} $B-1$:\ \ $r\gets A.\text{index}(a_t)$;\ \ $u\gets u(N-t)+r$;\ \ $A.\text{pop}(r)$
+\item \Ind \kw{return} $u$ \Cmt{Eq.~\eqref{eq:lehmer}}
+\end{pseudo}
+\end{algorithm}
+
+\section{Optional: Plausibility Aliases}
+Each codebook slot $j$ may own several visually interchangeable candidate images
+(LLM-verified aliases) that all map to the same index $j$. When enabled, the
+encoder picks, per emitted index, the candidate that makes the overall sequence
+look most like a natural album; because every alias of slot $j$ decodes to $j$,
+the decoder is unaffected and losslessness is preserved.
+
+\section{Top-Level Encode and Decode}
+Algorithm~\ref{alg:encode} is the sender pipeline (Eqs.~\eqref{eq:wrap}--\eqref{eq:whiten});
+Algorithm~\ref{alg:decode} is its exact inverse. Decoding recovers each received
+image's index by CLIP nearest neighbour,
+\begin{equation}
+  \hat{\imath}_t=\arg\max_{0\le j<N}\ s\big(e(\tilde x_t),\,\mathbf{C}_j\big),
+  \label{eq:nn}
+\end{equation}
+where $\tilde x_t$ is the (possibly channel-distorted) $t$-th received image. The
+reliability of \eqref{eq:nn} is the per-image \emph{decoding margin}
+\begin{equation}
+  \gamma_t=s_{(1)}-s_{(2)},
+  \label{eq:margin}
+\end{equation}
+the gap between the top-1 and top-2 cosine similarities; $\gamma_t>0$ guarantees
+the correct image wins and hence $\mathrm{BER}=0$.
+
+\begin{algorithm}[t]
+\caption{\textsc{Encode}: message $\to$ ordered image sequence}\label{alg:encode}
+\begin{pseudo}
+\item \kw{Input:} message $M$; codebook $\mathcal{C}$ (size $N$); key $\kappa$;
+      flags \textit{compress}, \textit{perm}, block $B$, \textit{alias}
+\item $p_0\gets \textsc{zlib}(\textsc{utf8}(M))$ \kw{if} \textit{compress} \kw{else} $\textsc{utf8}(M)$
+\item $f\gets \textsc{aes}_{\kappa}\big(p_0\concat\textsc{crc32}(p_0)\big)$ \Cmt{Eq.~\eqref{eq:wrap}; AES optional}
+\item $v\gets \textsc{int}_{\mathrm{BE}}(\mathtt{0x01}\concat f)$ \Cmt{Eq.~\eqref{eq:int}}
+\item \kw{if} \textit{perm} \kw{then}
+\item \Ind $m\gets P(N,B)$;\ \ $(e_0,\dots,e_{L'-1})\gets\textsc{toBaseN}(v,m)$
+\item \Ind $\text{idx}\gets\textsc{concat}_i\ \textsc{permEncode}\big((e_i+\mu_i)\bmod m,\,N,\,B\big)$ \Cmt{Eq.~\eqref{eq:whiten}}
+\item \kw{else}\ \ $\text{idx}\gets\textsc{toBaseN}(v,N)$ \Cmt{Eq.~\eqref{eq:digits}}
+\item \kw{if} \textit{alias} \kw{then} $S\gets[\,\textsc{chooseAlias}(j)\ \text{for}\ j\in\text{idx}\,]$
+      \kw{else} $S\gets[\,c_j\ \text{for}\ j\in\text{idx}\,]$
+\item \kw{return} image sequence $S$,\ \ metadata
+\end{pseudo}
+\end{algorithm}
+
+\begin{algorithm}[t]
+\caption{\textsc{Decode}: image sequence $\to$ message}\label{alg:decode}
+\begin{pseudo}
+\item \kw{Input:} received images $\langle\tilde x_0,\dots,\tilde x_{T-1}\rangle$;
+      codebook $\mathbf{C}$; key $\kappa$; flags \textit{compress}, \textit{perm}, $B$
+\item \kw{for} $t=0$ \kw{to} $T-1$:\ \ $\hat{\imath}_t\gets\arg\max_j s\big(e(\tilde x_t),\mathbf{C}_j\big)$ \Cmt{Eq.~\eqref{eq:nn}}
+\item \kw{if} \textit{perm} \kw{then}
+\item \Ind $m\gets P(N,B)$;\ \ \kw{for each} block $i$:\ \ $e_i\gets\big(\textsc{permDecode}(\hat\imath_{[iB:iB+B]},N)-\mu_i\big)\bmod m$
+\item \Ind $v\gets\textsc{fromBaseN}((e_0,\dots),m)$
+\item \kw{else}\ \ $v\gets\textsc{fromBaseN}(\hat\imath,N)$
+\item $f\gets \textsc{stripSentinel}(\textsc{bytes}_{\mathrm{BE}}(v))$
+\item $p_0\gets \textsc{unwrap}_{\kappa}(f)$ \Cmt{AES$^{-1}$ then verify CRC-32; reject on mismatch}
+\item \kw{return} $\textsc{utf8}^{-1}\big(\textsc{unzip}(p_0)\big)$ \kw{if} \textit{compress} \kw{else} $\textsc{utf8}^{-1}(p_0)$
+\end{pseudo}
+\end{algorithm}
+
+\section{Losslessness}
+Every transformation above is a bijection: \eqref{eq:wrap} is invertible
+(compression and AES are lossless, CRC is appended), \eqref{eq:int} is invertible
+by the sentinel, \eqref{eq:digits}/\eqref{eq:perm} are positional/factorial number
+systems, and \eqref{eq:whiten} is invertible $\bmod\,m$. Therefore, whenever CLIP
+recovers every index correctly ($\gamma_t>0\ \forall t$, Eq.~\eqref{eq:margin}),
+$\textsc{Decode}(\textsc{Encode}(M))=M$ exactly, i.e.\ $\mathrm{BER}=0$.
+
+\end{document}
