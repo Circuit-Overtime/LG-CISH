@@ -92,7 +92,65 @@ def ablation_bar():
     print("saved", out)
 
 
+def coding_modes_bar():
+    """Capacity (bits/image) for base-N vs. permutation blocks (matches Table 4 / coding modes)."""
+    import math
+    from bitstream.converter import _perm_modulus
+    cb = C.get_codebook()
+    n = cb["n_images"]
+    labels = ["Base-$N$", "Perm $b{=}8$", "Perm $b{=}16$", f"Perm $b{{=}}{n}$"]
+    vals = [math.log2(n)] + [math.log2(_perm_modulus(n, b)) / b for b in (8, 16, n)]
+    fig, ax = plt.subplots(figsize=(6.5, 4))
+    bars = ax.bar(labels, vals, color=["tab:green", "tab:blue", "tab:blue", "tab:orange"])
+    ax.axhline(math.log2(n), ls=":", color="gray",
+               label=f"base-$N$ ceiling $= {math.log2(n):.3f}$")
+    ax.set_ylabel("Capacity (bits/image)")
+    ax.set_title(f"Coding modes: capacity vs.\\ no-repeat guarantee ($N={n}$)")
+    ax.set_ylim(0, math.log2(n) * 1.18)
+    for b_, v in zip(bars, vals):
+        ax.text(b_.get_x() + b_.get_width() / 2, v + 0.04, f"{v:.3f}", ha="center", fontsize=9)
+    ax.legend()
+    out = f"{C.FIG_DIR}/fig_coding_modes.png"
+    fig.tight_layout(); fig.savefig(out, dpi=150); plt.close(fig)
+    print("saved", out)
+
+
+def timing_bar():
+    """Per-stage timing (matches Table 5 / timing). Log scale: encode is ~ms, CLIP dominates."""
+    import time
+    import random
+    from encoder.encode import encode
+    from decoder.decode import decode
+    from clip_engine.embedder import embed_image
+    cb = C.get_codebook()
+    msg = C.random_message(200, random.Random(0))
+    t0 = time.perf_counter()
+    for _ in range(20):
+        paths, _ = encode(msg, cb)
+    t_enc = (time.perf_counter() - t0) / 20 * 1000
+    t0 = time.perf_counter()
+    for _ in range(10):
+        embed_image(cb["paths"][0])
+    t_embed = (time.perf_counter() - t0) / 10 * 1000
+    t0 = time.perf_counter()
+    decode(paths, cb)
+    t_dec_img = (time.perf_counter() - t0) / max(1, len(paths)) * 1000
+    labels = ["Encode\n(full msg)", "CLIP embed\n(per image)", "Decode\n(per image)"]
+    vals = [t_enc, t_embed, t_dec_img]
+    fig, ax = plt.subplots(figsize=(6.5, 4))
+    bars = ax.bar(labels, vals, color=["tab:green", "tab:blue", "tab:purple"])
+    ax.set_yscale("log"); ax.set_ylabel("Time (ms, log scale)")
+    ax.set_title(f"Per-stage timing ({len(paths)} images, RTX 3050)")
+    for b_, v in zip(bars, vals):
+        ax.text(b_.get_x() + b_.get_width() / 2, v * 1.15, f"{v:.2f} ms", ha="center", fontsize=9)
+    out = f"{C.FIG_DIR}/fig_timing.png"
+    fig.tight_layout(); fig.savefig(out, dpi=150); plt.close(fig)
+    print("saved", out)
+
+
 if __name__ == "__main__":
     heatmap()
     margin_per_attack()
     ablation_bar()
+    coding_modes_bar()
+    timing_bar()
