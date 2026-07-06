@@ -1,47 +1,79 @@
 % ===================================================================
-%  algorithms.tex — Algorithms 1-3 (self-contained pseudocode floats).
-%  Requires the \pseudo environment + \kw/\Ind/\Indd/\Cmt macros defined
-%  in main.tex's preamble. \input from main.tex.
+%  algorithms.tex - LG-CISH Algorithms 1-5 (modular; \input by the paper).
+%  Requires the pseudo env + \kw/\Ind/\Indd/\Cmt/\Eqn macros from the preamble.
 % ===================================================================
 
 \begin{algorithm}[t]
-\caption{Codebook construction}\label{alg:codebook}
+\caption{Codebook construction (pre-processing)}\label{alg:codebook}
 \begin{pseudo}
-\item \kw{Input:} image set $\mathcal{D}$, CLIP encoder $\Phi$, threshold $\tau$
-\item \kw{Output:} codebook embeddings $\mathbf{C}$, paths, $N$
-\item $E \gets [\,e(x)\ \text{for } x\in\mathcal{D}\,]$ \Cmt{Eq.~\eqref{eq:embed}, batched}
+\item \kw{Input:} candidate image set $\mathcal{D}$, encoder $\Phi$, threshold $\tau$
+\item \kw{Output:} codebook embeddings $\mathbf{C}$, image paths, size $N$
+\item $E \gets [\,e(x)\ \text{for } x\in\mathcal{D}\,]$ \Cmt{normalise, \Eqn{eq:embedintro}}
 \item $\mathcal{K}\gets\emptyset$
 \item \kw{for} $j=0$ \kw{to} $|\mathcal{D}|-1$ \kw{do}
-\item \Ind \kw{if} $\max_{i\in\mathcal{K}} s(E_i,E_j)\le\tau$ \kw{then} \Cmt{Eq.~\eqref{eq:prune}}
-\item \Indd $\mathcal{K}\gets\mathcal{K}\cup\{j\}$
-\item \Ind \kw{end if}
+\item \Ind \kw{if} $\max_{i\in\mathcal{K}} s(E_i,E_j)\le\tau$ \kw{then}
+           $\ \mathcal{K}\gets\mathcal{K}\cup\{j\}$ \Cmt{\Eqn{eq:sep}}
 \item \kw{end for}
-\item $\mathbf{C}\gets E[\mathcal{K}]$;\quad $N\gets|\mathcal{K}|$
-\item \kw{return} $\mathbf{C}$, paths$[\mathcal{K}]$, $N$
+\item \kw{return} $\mathbf{C}\gets E[\mathcal{K}]$,\ \ paths$[\mathcal{K}]$,\ \ $N\gets|\mathcal{K}|$
 \end{pseudo}
 \end{algorithm}
 
 \begin{algorithm}[t]
-\caption{Encode: message $\to$ image sequence}\label{alg:encode}
+\caption{Cryptographic framing (\textsc{wrap} / \textsc{unwrap}, AES-256-CBC)}\label{alg:wrap}
 \begin{pseudo}
-\item \kw{Input:} message $m$, codebook $\mathcal{C}$ ($N$ imgs), key $\kappa$ (optional)
-\item $p \gets \textsc{zlib}(\textsc{utf8}(m))$
-\item $p \gets \textsc{aes}_{\kappa}\!\big(p \,\Vert\, \textsc{crc32}(p)\big)$ \Cmt{wrap}
-\item $v \gets \textsc{int}_{\text{BE}}(\mathtt{0x01}\Vert p)$ \Cmt{Eq.~\eqref{eq:int}}
-\item $(d_0,\dots,d_{L-1}) \gets \textsc{toBaseN}(v,N)$ \Cmt{Eq.~\eqref{eq:digits}}
-\item \kw{return} $[\,c_{d_0},\dots,c_{d_{L-1}}\,]$
+\item \kw{function} \textsc{wrap}$(m,\kappa)$
+\item \Ind $p_0 \gets \textsc{zlib}(\textsc{utf8}(m))$ \Cmt{\Eqn{eq:zlib}}
+\item \Ind $t \gets p_0 \concat \textsc{crc32}(p_0)$ \Cmt{append 4-byte CRC}
+\item \Ind \kw{if} $\kappa$ given \kw{then} $IV\gets\textsc{rand}(16)$;\ \ \kw{return} $IV \concat \textsc{aes-cbc}_\kappa(\textsc{pad}(t),IV)$
+\item \Ind \kw{else} \kw{return} $t$ \Cmt{CRC-only mode}
+\item \kw{function} \textsc{unwrap}$(f,\kappa)$
+\item \Ind \kw{if} $\kappa$ given \kw{then} $t\gets\textsc{unpad}(\textsc{aes-cbc}^{-1}_\kappa(f_{[16:]},f_{[:16]}))$ \kw{else} $t\gets f$
+\item \Ind split $t=p_0\concat c$;\ \ \kw{if} $c\neq\textsc{crc32}(p_0)$ \kw{then} \kw{reject}
+\item \Ind \kw{return} $p_0$
 \end{pseudo}
 \end{algorithm}
 
 \begin{algorithm}[t]
-\caption{Decode: image sequence $\to$ message}\label{alg:decode}
+\caption{Lehmer block coding (\textsc{permEncode} / \textsc{permDecode})}\label{alg:lehmer}
 \begin{pseudo}
-\item \kw{Input:} received images $[\tilde{x}_0,\dots,\tilde{x}_{L-1}]$, codebook $\mathbf{C}$, key $\kappa$
-\item \kw{for} $t=0$ \kw{to} $L-1$ \kw{do}
-\item \Ind $\hat d_t \gets \arg\max_j s(e(\tilde{x}_t),\mathbf{C}_j)$ \Cmt{Eq.~\eqref{eq:nn}}
-\item \kw{end for}
-\item $v \gets \sum_t \hat d_t N^{t}$;\quad $p \gets \textsc{stripSentinel}(\textsc{bytes}(v))$
-\item $p \gets \textsc{aes}^{-1}_{\kappa}(p)$;\ \ \kw{verify} CRC-32 \Cmt{reject on mismatch}
-\item \kw{return} $\textsc{utf8}^{-1}(\textsc{unzip}(p))$
+\item \kw{function} \textsc{permEncode}$(u,N,B)$ \Cmt{integer $\to$ $B$ distinct indices}
+\item \Ind \kw{for} $t=B-1$ \kw{down to} $0$:\ \ $r_t\gets u\bmod(N-t)$;\ \ $u\gets\lfloor u/(N-t)\rfloor$
+\item \Ind $A\gets[0,1,\dots,N-1]$;\ \ \kw{return} $[\,A.\text{pop}(r_t)\ \text{for}\ t=0\dots B-1\,]$
+\item \kw{function} \textsc{permDecode}$(\langle a_0,\dots,a_{B-1}\rangle,N)$ \Cmt{indices $\to$ integer}
+\item \Ind $A\gets[0,\dots,N-1]$;\ \ $u\gets0$
+\item \Ind \kw{for} $t=0$ \kw{to} $B-1$:\ \ $r\gets A.\text{index}(a_t)$;\ \ $u\gets u(N-t)+r$;\ \ $A.\text{pop}(r)$
+\item \Ind \kw{return} $u$ \Cmt{\Eqn{eq:lehmermethod}}
+\end{pseudo}
+\end{algorithm}
+
+\begin{algorithm}[t]
+\caption{\textsc{Encode}: message $\to$ ordered image sequence}\label{alg:encode}
+\begin{pseudo}
+\item \kw{Input:} message $m$; codebook $\mathcal{C}$ (size $N$); key $\kappa$;
+      flags \textit{perm}, block $B$, \textit{alias}
+\item $f\gets\textsc{wrap}(m,\kappa)$ \Cmt{Algorithm~\ref{alg:wrap}}
+\item $v\gets\textsc{int}_{\mathrm{BE}}(\mathtt{0x01}\concat f)$ \Cmt{\Eqn{eq:intmethod}}
+\item \kw{if} \textit{perm} \kw{then}
+\item \Ind $m'\gets P(N,B)$;\ \ $(e_0,\dots)\gets\textsc{toBaseN}(v,m')$
+\item \Ind $\text{idx}\gets\textsc{concat}_i\ \textsc{permEncode}\big((e_i+\mu_i)\bmod m',N,B\big)$ \Cmt{\Eqn{eq:whitenmethod}}
+\item \kw{else}\ \ $\text{idx}\gets\textsc{toBaseN}(v,N)$ \Cmt{\Eqn{eq:basenmethod}}
+\item \kw{if} \textit{alias} \kw{then} $S\gets[\,\textsc{chooseAlias}(j)\ \text{for}\ j\in\text{idx}\,]$
+      \kw{else} $S\gets[\,c_j\ \text{for}\ j\in\text{idx}\,]$
+\item \kw{return} image sequence $S$
+\end{pseudo}
+\end{algorithm}
+
+\begin{algorithm}[t]
+\caption{\textsc{Decode}: image sequence $\to$ message}\label{alg:decode}
+\begin{pseudo}
+\item \kw{Input:} received images $\langle\tilde y_0,\dots,\tilde y_{T-1}\rangle$;
+      codebook $\mathbf{C}$; key $\kappa$; flags \textit{perm}, $B$
+\item \kw{for} $t=0$ \kw{to} $T-1$:\ \ $\hat\imath_t\gets\arg\max_j s(e(\tilde y_t),\mathbf{C}_j)$ \Cmt{\Eqn{eq:nnintro}}
+\item \kw{if} \textit{perm} \kw{then}
+\item \Ind $m'\gets P(N,B)$;\ \ \kw{for each} block $i$:\ \ $e_i\gets(\textsc{permDecode}(\hat\imath_{[iB:iB+B]},N)-\mu_i)\bmod m'$
+\item \Ind $v\gets\textsc{fromBaseN}((e_0,\dots),m')$
+\item \kw{else}\ \ $v\gets\textsc{fromBaseN}(\hat\imath,N)$
+\item $f\gets\textsc{stripSentinel}(\textsc{bytes}_{\mathrm{BE}}(v))$ \Cmt{inverse of \Eqn{eq:intmethod}}
+\item \kw{return} $\textsc{unwrap}(f,\kappa)$ \Cmt{verify CRC, decrypt, decompress}
 \end{pseudo}
 \end{algorithm}
