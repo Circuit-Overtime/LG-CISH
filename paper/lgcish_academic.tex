@@ -49,15 +49,7 @@
 
 \title{\textbf{LG-CISH: Lossless Language-Guided Coverless Image\\
 Steganography via CLIP Semantic Hashing and Base-$N$ Positional Coding}}
-\author{%
-  Ayushman Bhattacharya\,$^{1}$ \and
-  Shreya Dutta\,$^{2}$ \and
-  Soumyashree Biswas\,$^{2}$ \and
-  Piyali Sarkar\,$^{2}$ \and
-  Harsh Raj\,$^{2}$% \and
-  \thanks{$^{1}$Product Engineer, myceli.ai. Email: \texttt{ayushman@myceli.ai}.\quad
-          $^{2}$Department of Computer Science \& Engineering (Cyber Security).}%
-}
+\author{}
 \date{}
 
 \begin{document}
@@ -659,42 +651,191 @@ statistical validation are reported in the subsequent sections.
 % ###################################################################
 
 % ============================ 2. RELATED WORK ============================
-\section{Related Work}\label{sec:related}
-% -------------------------------------------------------------------
-\paragraph{Embedding-based steganography.}
-LSB substitution hides bits in the least significant bit-planes of the cover and
-offers very high capacity at the cost of detectability~\cite{chan2004}. Transform
--domain methods (JSteg, F5~\cite{westfeld2001f5}, and DWT--DCT hybrids) embed in
-frequency coefficients for better robustness to compression, and deep methods
-hide one image inside another~\cite{baluja2017} or embed decodable hyperlinks
-that survive printing~\cite{tancik2020}. All of them modify the cover and are
-therefore vulnerable, in principle, to statistical~\cite{westfeld1999,fridrich2001}
-and CNN-based~\cite{xu2016,boroumand2019} steganalysis.
+\section{Literature Review}\label{sec:related}
 
-\paragraph{Coverless steganography.}
-Zhou et al.~\cite{zhou2015} introduced coverless image steganography, indexing a
-database by robust hashes and selecting images whose hash equals a message
-segment. Subsequent work improved robustness through better dataset
-construction~\cite{neglected2022}, end-to-end learned hash
-generation~\cite{end2endHash2023}, SURF-based retrieval~\cite{surf2024}, and
-image-restoration front-ends~\cite{restoration2024}. A second, \emph{generative}
-branch synthesises stego images from the secret using GANs or diffusion
-models~\cite{imageMapping2024,diffstega2024}. Recent surveys catalogue the rapid
-growth of both branches and identify robustness and capacity as the key open
-problems~\cite{coverlessSurvey2024,dlSurvey2024}. LG-CISH belongs to the
-selection/mapping branch but replaces robust \emph{perceptual} hashing with
-\emph{semantic} CLIP hashing and adds base-$N$ positional coding for capacity.
+\subsection{Traditional Image Steganography Techniques}
+Image steganography has been extensively investigated as a means of concealing
+secret information within digital images while maintaining visual imperceptibility.
+Conventional approaches can be broadly categorized into spatial-domain and
+transform-domain methods. Spatial-domain techniques, particularly Least Significant
+Bit (LSB) substitution, achieve high embedding capacity by directly modifying pixel
+values; however, they remain vulnerable to statistical steganalysis and
+image-processing attacks. Transform-domain approaches such as the Discrete Cosine
+Transform (DCT), the Discrete Wavelet Transform (DWT), and hybrid DWT--DCT methods
+improve robustness by embedding information into frequency coefficients, thereby
+reducing perceptual distortion and increasing resistance to compression attacks
+[2,4,7,10].
 
-\paragraph{Vision--language embeddings.}
-CLIP~\cite{radford2021} jointly trains an image and a text encoder on 400M
-image--text pairs with a contrastive objective, yielding a shared embedding space
-that is robust to distribution shift. We exploit only its image encoder, using
-the normalised embedding as a robust semantic fingerprint --- a use complementary
-to its common role in retrieval and zero-shot classification.
+Kadhim et al.\ [1] conducted a comprehensive survey of image steganography and
+concluded that a trade-off always exists among payload capacity, imperceptibility,
+and robustness. Similarly, Subramanian et al.\ [2] highlighted that modern
+transform-domain schemes achieve superior image quality compared with
+spatial-domain approaches but still rely on pixel modification. Mandal et al.\ [3]
+further demonstrated that hybrid transform methods can improve robustness but remain
+susceptible to advanced detection mechanisms.
 
-% -------------------------------------------------------------------
+Despite continuous improvements in embedding strategies, traditional steganographic
+systems inherently modify image content, which leaves detectable statistical traces
+that can be exploited by steganalysis algorithms.
 
-% ============================ 3. PROPOSED METHOD =========================
+\subsection{Steganalysis and Detection Challenges}
+The increasing sophistication of steganographic techniques has been accompanied by
+significant advances in steganalysis. Statistical detectors such as chi-square
+analysis, RS analysis, and histogram-based methods have proven effective in
+identifying hidden information embedded within digital images. Recent developments
+in machine learning and deep learning have further enhanced the detection capability
+of steganalysis systems.
+
+Kombrink et al.\ [4] presented a detailed survey of modern image-steganography
+detection techniques and reported that convolutional neural network (CNN)-based
+detectors consistently outperform conventional statistical approaches. Kheddar
+et al.\ [5] reviewed deep-learning-based steganalysis frameworks and showed that
+deep neural architectures can successfully identify subtle embedding artifacts
+across diverse multimedia formats. Likewise, Apau et al.\ [6] observed that even
+highly optimized steganographic algorithms often exhibit detectable statistical
+inconsistencies under advanced analysis.
+
+These findings indicate that, regardless of embedding domain, the fundamental
+weakness of conventional steganography arises from the modification of pixel values.
+Consequently, researchers have increasingly explored coverless communication
+paradigms that avoid image modification altogether.
+
+\subsection{Coverless Image Steganography}
+Coverless image steganography has emerged as a promising alternative to conventional
+data-hiding techniques. Unlike traditional methods, coverless approaches do not
+alter image pixels; instead, secret information is conveyed through image selection,
+retrieval, indexing, or semantic relationships among images.
+
+Qin et al.\ [7] presented one of the most comprehensive surveys on coverless image
+steganography and classified existing approaches into image retrieval-based, image
+mapping-based, and semantic association-based methods. Their study demonstrated that
+coverless communication inherently avoids statistical detection because no image
+modifications are introduced during transmission. Meng et al.\ [8] further reviewed
+recent developments in coverless steganography and highlighted that image-database
+construction and semantic indexing remain critical challenges affecting practical
+deployment.
+
+Although coverless methods significantly improve resistance to steganalysis, most
+existing approaches rely on handcrafted features, image-hashing techniques, or
+predefined mapping tables. Such mechanisms often suffer from limited semantic
+representation capability and reduced scalability when handling complex textual
+information.
+
+\subsection{Semantic Representation and Hash-Based Retrieval}
+Recent advances in multimedia retrieval have demonstrated that semantic
+representation learning provides an effective mechanism for bridging heterogeneous
+data modalities through high-dimensional feature embeddings. Instead of relying
+solely on low-level visual descriptors, modern retrieval frameworks aim to preserve
+semantic relationships among data samples by learning discriminative latent
+representations that capture contextual and conceptual similarities. Such
+representations facilitate robust similarity matching and improve retrieval
+performance in large-scale image databases.
+
+Hu et al.\ [9] proposed a Joint Semantic Preserving Sparse Hashing (JSPSH) framework
+for cross-modal retrieval, in which semantic consistency between different
+modalities is maintained during the hash-learning process. Their approach
+simultaneously exploits semantic labels and sparse-representation constraints to
+generate compact binary hash codes while preserving inter-modal semantic
+correlations. Experimental results demonstrated that semantic-preserving hashing
+significantly improves retrieval accuracy by ensuring that semantically related
+instances are mapped to neighboring regions in the Hamming space. The study further
+highlighted the importance of maintaining semantic structure during binary-code
+generation, thereby enabling efficient large-scale retrieval with reduced storage
+and computational overhead.
+
+Similarly, Li et al.\ [10] introduced a Semantic Preservation-Based Hash Code
+Generation (SPHCG) framework for fine-grained image retrieval. Unlike conventional
+hashing methods that primarily focus on visual similarity, their approach emphasizes
+the preservation of subtle semantic distinctions among visually similar image
+categories. By integrating semantic information into the hash-learning process, the
+generated binary codes retain discriminative characteristics that improve retrieval
+precision in complex image datasets. Their findings demonstrate that semantic-aware
+hash generation can effectively enhance retrieval robustness while maintaining
+computational efficiency.
+
+These studies collectively indicate that semantic-preserving hashing provides an
+effective mechanism for transforming high-dimensional semantic representations into
+compact binary codes while retaining meaningful neighbourhood relationships.
+
+Although semantic-preserving hashing has achieved remarkable success in cross-modal
+retrieval and fine-grained image-retrieval applications [9,10], its integration with
+coverless image steganography remains largely unexplored. Existing coverless
+communication schemes predominantly rely on perceptual similarity, image indexing,
+or handcrafted feature matching, without leveraging the semantic-understanding
+capabilities offered by modern representation-learning frameworks. Consequently, the
+potential of combining semantic embeddings, semantic hashing, and image retrieval
+for secure coverless communication has not yet been fully investigated. This
+limitation motivates the development of the proposed LLM-Guided Coverless Image
+Steganography using Semantic Hash Mapping (LG-CISH) framework, which exploits
+semantic-preserving hash representations to establish a robust mapping between
+textual semantics and image-based communication channels.
+
+\subsection{Emerging Role of Large Language Models in Secure Communication}
+The rapid advancement of Large Language Models (LLMs) has introduced new
+possibilities for semantic communication systems. LLMs possess the capability to
+transform textual information into semantically meaningful token sequences and
+contextual embeddings that preserve linguistic relationships. Such representations
+provide a natural bridge between human language and machine-understandable semantic
+spaces.
+
+Recent studies in semantic communications suggest that transmitting meaning rather
+than raw bits can improve communication efficiency and robustness. However, the
+application of LLM-generated semantic embeddings to coverless steganography remains
+largely unexplored. Existing steganographic research primarily focuses on payload
+optimization, distortion minimization, and robustness enhancement, while semantic
+understanding is rarely incorporated into the communication pipeline.
+
+Consequently, there exists a significant opportunity to leverage LLM-driven semantic
+encoding for secure image-based communication systems.
+
+\subsection{Research Gap and Motivation}
+The literature reveals several important limitations in existing steganographic and
+coverless communication approaches, as summarised in Table~\ref{tab:gap}.
+
+\begin{table}[H]
+\centering
+\caption{Comparison of existing methodology, their limitations, and gap analysis.}\label{tab:gap}
+\footnotesize
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.05cm}p{2.55cm}p{4.05cm}p{4.35cm}@{}}
+\toprule
+References & Method & Limitation & Research Gap \\
+\midrule
+Kadhim et al.\ [1] & Spatial and transform-domain image steganography & Focuses on pixel-modification techniques and trade-offs among capacity, robustness and imperceptibility. & Need a pixel-modification-free (coverless) communication framework that completely avoids embedding artifacts. \\
+Subramanian et al.\ [2] & Transform-domain (DCT, DWT, hybrid) & Improves image quality but still modifies transform coefficients. & Develop a framework eliminating coefficient modification while preserving security through semantic image selection. \\
+Mandal et al.\ [3] & Hybrid transform-domain steganography & Vulnerable to advanced statistical and deep-learning steganalysis. & Design a steganalysis-resistant coverless communication system without altering image statistics. \\
+Kombrink et al.\ [4] & CNN-based steganalysis survey & Demonstrates high detection accuracy against conventional steganography. & Develop communication methods that generate no embedding artifacts detectable by CNN-based steganalysis. \\
+Kheddar et al.\ [5] & Deep-learning-based multimedia steganalysis & Detects subtle embedding traces even in optimized methods. & Introduce a communication paradigm based on semantic retrieval rather than embedding. \\
+Apau et al.\ [6] & Statistical analysis of modern steganography & Hidden data still leaves statistical inconsistencies. & Remove statistical footprints through coverless semantic communication. \\
+Qin et al.\ [7] & Coverless image steganography & Mainly relies on image retrieval, mapping and handcrafted descriptors. & Replace handcrafted descriptors with deep semantic embeddings and semantic hashing for robust retrieval. \\
+Meng et al.\ [8] & Coverless image steganography & Database construction and semantic indexing remain challenging. & Develop an automatic semantic hash-mapping mechanism for scalable image retrieval. \\
+Hu et al.\ [9] & Joint Semantic Preserving Sparse Hashing (JSPSH) & Designed for cross-modal retrieval, not secure communication. & Integrate semantic-preserving hashing into coverless image steganography for secure message transmission. \\
+Li et al.\ [10] & Semantic Preservation-Based Hash Code Generation (SPHCG) & Focuses on fine-grained image retrieval only. & Extend semantic hashing to coverless steganographic communication and message reconstruction. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Conventional steganography techniques modify image pixels and therefore remain
+vulnerable to statistical and deep-learning-based steganalysis [3,8,9]. Existing
+coverless image-steganography approaches largely depend on handcrafted image
+descriptors, image-retrieval mechanisms, or predefined mapping rules that provide
+limited semantic expressiveness [1,5]. Current image retrieval-based systems
+generally focus on visual similarity rather than semantic understanding, restricting
+their ability to encode complex natural-language messages. Existing studies have not
+adequately explored the integration of Large Language Models with semantic hashing
+for coverless communication, and a unified framework that combines semantic-token
+generation, semantic embedding, semantic hashing, perceptual image hashing, image
+retrieval, and semantic reconstruction remains absent from the literature.
+
+Motivated by these challenges, this work proposes a novel LLM-Guided Coverless Image
+Steganography using Semantic Hash Mapping (LG-CISH) framework. The proposed method
+introduces an end-to-end semantic communication architecture in which a secret
+message is transformed into semantic tokens, encoded into semantic hashes, matched
+against perceptual image hashes stored in an image database, and reconstructed
+through reverse semantic mapping. By eliminating pixel modification entirely, the
+proposed framework aims to achieve high steganalysis resistance while simultaneously
+exploiting the semantic-reasoning capabilities of modern Large Language Models.
+
 \section{Proposed Method}\label{sec:method}
 % ###################################################################
 \subsection{Overview}\label{sec:overview}
