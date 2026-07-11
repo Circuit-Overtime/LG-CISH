@@ -201,7 +201,8 @@ imperceptibility (Equation~\eqref{eq:infpsnr}) and high robustness
 \node[orange!75!black, font=\scriptsize, right=1pt] at (-0.35,-0.35) {DCT/DWT};
 \fill[green!45!black] (0.75,0.55) circle (2.6pt);
 \node[green!40!black, font=\scriptsize, right=1pt] at (0.75,0.55) {\textbf{LG-CISH}};
-\draw[<->,gray] (I)++(0.2,-0.5) to[bend left=15] node[midway,font=\scriptsize,sloped,above]{trade-off} ($(R)+(-0.4,0.3)$);
+\draw[<->, gray] (1.15,0.9) to[bend left=12] (2.05,-0.85);
+\node[gray, font=\scriptsize] at (2.05,0.15) {trade-off};
 \end{tikzpicture}
 \caption{The steganographic trade-off triangle. The three objectives are mutually
 opposing: improving one tends to degrade the others. Pixel-domain methods sit near
@@ -211,7 +212,7 @@ imperceptibility--robustness edge.}
 \end{figure}
 
 % ===================================================================
-\subsection{Payload Capacity}\label{sec:capacity}
+\subsection{Payload Capacity}\label{sec:rescap}
 % ===================================================================
 Capacity is the price paid for the imperceptibility of Equation~\eqref{eq:infpsnr}.
 It is reported at two granularities. Per image, the base-$40$ code carries
