@@ -1180,10 +1180,30 @@ robustness across twenty of twenty-one channel attacks (graceful degradation onl
 under a $10\times$ downscale), chance-level steganalysis detectability ($47.5\%$
 vs.\ $97.5\%$ for LSB), and a statistically significant geometric-robustness
 advantage over perceptual hashing ($p{=}7.8\times10^{-3}$). Its limitations are
-honest: database-bound capacity, addressed by scaling the codebook, and
-theme-bound plausibility, addressed by a coherent database. Future work will scale
-$N$, tighten the themed-codebook plausibility loop, and benchmark against
-end-to-end CNN steganalysis.
+stated honestly: capacity is database-bound and is addressed by scaling the
+codebook, while cover plausibility is theme-bound and is addressed by a coherent
+database. Taken together, the results indicate that a coverless channel built on
+semantic hashing can attain, simultaneously, the imperceptibility and robustness
+that pixel-domain methods must trade against one another.
+
+\subsection*{Future Scope}
+Several directions are left for future work. \emph{First}, the codebook can be
+scaled from the present $N{=}40$ to $N{=}10^{3}$--$10^{4}$ images, which raises the
+per-image capacity to $10$--$13$ bits and shortens the transmitted sequence, subject
+to maintaining the separation margin as the embedding space becomes more densely
+populated. \emph{Second}, the plausibility of the cover \emph{ordering} can be
+strengthened by tightening the large-language-model alias and re-selection loop
+around a thematically coherent database, so that the transmitted sequence reads as a
+natural personal album rather than a set of unrelated images. \emph{Third}, although
+undetectability holds by construction against pixel-domain detectors, a dedicated
+adversarial study against end-to-end convolutional steganalysers (SRNet, XuNet)
+trained specifically on this channel would further substantiate the security claim.
+\emph{Fourth}, the distinct-image permutation and a dual-channel identity--ordering
+code can be combined to recover part of the capacity conceded to the coverless
+paradigm. \emph{Finally}, the framework can be extended beyond still images to
+coverless video and audio channels, and validated in a real-world deployment over
+public messaging platforms, together with a study of database versioning and key
+management for practical multi-party use.
 
 
 \begin{thebibliography}{99}
