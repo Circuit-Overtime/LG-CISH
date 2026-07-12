@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this codebook dataset, please cite it as below."
+title: "LG-CISH Codebook Dataset: a 40-image augmented codebook for coverless image steganography"
+abstract: >-
+  A fixed codebook of 40 mutually distinct 512x512 natural images used by the
+  LG-CISH coverless image-steganography framework. Pooled from the UCID, Kodak, and
+  USC-SIPI benchmark suites, normalised to 512x512, embedded with CLIP ViT-B/32, and
+  greedily pruned to a pairwise cosine-similarity threshold of 0.85 (base-40 coding,
+  ~5.322 bits/image). Messages are encoded by the identity and order of unmodified
+  images, never by pixel modification.
+type: dataset
+version: "1.0.0"
+date-released: "2026-07-08"
+license-url: "https://github.com/USER/REPO"       # TODO: set repository URL
+url: "https://github.com/USER/REPO"                # TODO: set repository URL
+# doi: "10.5281/zenodo.XXXXXXX"                     # TODO: add if a DOI is minted
+keywords:
+  - coverless image steganography
+  - CLIP
+  - semantic hashing
+  - image codebook
+  - dataset
+authors:
+  - family-names: "Bhattacharya"
+    given-names: "Ayushman"
+  - family-names: "Dutta"
+    given-names: "Shreya"
+  - family-names: "Biswas"
+    given-names: "Soumyashree"
+  - family-names: "Sarkar"
+    given-names: "Piyali"
+  - family-names: "Raj"
+    given-names: "Harsh"
