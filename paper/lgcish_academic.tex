@@ -94,7 +94,7 @@ semantic hashing; base-$N$ coding; robustness; steganalysis resistance.
 Steganography is the practice of hiding the very \emph{existence} of a
 communication, in contrast to cryptography, which hides only its
 \emph{content}~\cite{provos2003}. The canonical setting is Simmons' prisoner's
-problem: two parties wish to coordinate an escape while every message they
+problem~\cite{simmons}: two parties wish to coordinate an escape while every message they
 exchange is inspected by a warden, who releases a message only if it appears
 innocuous. A message is therefore safe not when it cannot be read, but when its
 carrier cannot be distinguished from ordinary traffic. This distinction motivates
@@ -247,7 +247,7 @@ there exists a capacity--distortion function $C(D)$, the largest secure payload
 achievable within a distortion budget $D$, which is non-decreasing and concave; a
 family of embedding methods differs only in how closely it approaches this frontier.
 Classical spatial and transform-domain schemes --- least-significant-bit
-substitution, and DCT- or DWT-based embedding --- all operate strictly inside the
+substitution~\cite{chan2004}, and DCT- or DWT-based embedding~\cite{westfeld2001f5} --- all operate strictly inside the
 region $D>0$, and thus purchase every additional bit with additional distortion and,
 through \Eqn{eq:pinsker}, with additional detectability. The proposal of this paper
 is to leave that frontier altogether by operating at the single point $D=0$, which
@@ -255,7 +255,7 @@ the coverless principle of \S\ref{sec:coverless} shows to be attainable.
 
 \subsection{Statistical detectability and its fundamental limits}\label{sec:security}
 The proper measure of steganographic security is not distortion but statistical
-distinguishability. Following Cachin, the (in)security of a stegosystem is
+distinguishability. Following Cachin~\cite{cachin}, the (in)security of a stegosystem is
 quantified by the Kullback--Leibler divergence between the innocent and the
 transmitted laws,
 \begin{equation}
@@ -288,7 +288,7 @@ $D\!\left(P_C\|P_S\right)\to 0$ the best possible detector is driven to
 $P_E\to\tfrac12$, i.e.\ to blind guessing. Second, any embedding that perturbs the
 cover makes $P_S\neq P_C$ and therefore makes $D>0$, which in turn caps how
 undetectable the scheme can be. A further limit, the square-root law of
-steganographic capacity, states that the largest payload that keeps $D$ bounded
+steganographic capacity~\cite{kerSqrt}, states that the largest payload that keeps $D$ bounded
 grows only as the square root of the cover size,
 \begin{equation}
   |m^\star| = \Theta\!\left(\sqrt{n}\right),
@@ -664,13 +664,13 @@ image-processing attacks. Transform-domain approaches such as the Discrete Cosin
 Transform (DCT), the Discrete Wavelet Transform (DWT), and hybrid DWT--DCT methods
 improve robustness by embedding information into frequency coefficients, thereby
 reducing perceptual distortion and increasing resistance to compression attacks
-[2,4,7,10].
+\cite{subramanian,kombrink,qin,liSPHCG}.
 
-Kadhim et al.\ [1] conducted a comprehensive survey of image steganography and
+Kadhim et al.\ \cite{kadhim} conducted a comprehensive survey of image steganography and
 concluded that a trade-off always exists among payload capacity, imperceptibility,
-and robustness. Similarly, Subramanian et al.\ [2] highlighted that modern
+and robustness. Similarly, Subramanian et al.\ \cite{subramanian} highlighted that modern
 transform-domain schemes achieve superior image quality compared with
-spatial-domain approaches but still rely on pixel modification. Mandal et al.\ [3]
+spatial-domain approaches but still rely on pixel modification. Mandal et al.\ \cite{mandal}
 further demonstrated that hybrid transform methods can improve robustness but remain
 susceptible to advanced detection mechanisms.
 
@@ -681,17 +681,17 @@ that can be exploited by steganalysis algorithms.
 \subsection{Steganalysis and Detection Challenges}
 The increasing sophistication of steganographic techniques has been accompanied by
 significant advances in steganalysis. Statistical detectors such as chi-square
-analysis, RS analysis, and histogram-based methods have proven effective in
+analysis~\cite{westfeld1999}, RS analysis~\cite{fridrich2001}, and histogram-based methods have proven effective in
 identifying hidden information embedded within digital images. Recent developments
 in machine learning and deep learning have further enhanced the detection capability
 of steganalysis systems.
 
-Kombrink et al.\ [4] presented a detailed survey of modern image-steganography
+Kombrink et al.\ \cite{kombrink} presented a detailed survey of modern image-steganography
 detection techniques and reported that convolutional neural network (CNN)-based
 detectors consistently outperform conventional statistical approaches. Kheddar
-et al.\ [5] reviewed deep-learning-based steganalysis frameworks and showed that
+et al.\ \cite{kheddar} reviewed deep-learning-based steganalysis frameworks and showed that
 deep neural architectures can successfully identify subtle embedding artifacts
-across diverse multimedia formats. Likewise, Apau et al.\ [6] observed that even
+across diverse multimedia formats. Likewise, Apau et al.\ \cite{apau} observed that even
 highly optimized steganographic algorithms often exhibit detectable statistical
 inconsistencies under advanced analysis.
 
@@ -706,11 +706,11 @@ data-hiding techniques. Unlike traditional methods, coverless approaches do not
 alter image pixels; instead, secret information is conveyed through image selection,
 retrieval, indexing, or semantic relationships among images.
 
-Qin et al.\ [7] presented one of the most comprehensive surveys on coverless image
+Qin et al.\ \cite{qin} presented one of the most comprehensive surveys on coverless image
 steganography and classified existing approaches into image retrieval-based, image
 mapping-based, and semantic association-based methods. Their study demonstrated that
 coverless communication inherently avoids statistical detection because no image
-modifications are introduced during transmission. Meng et al.\ [8] further reviewed
+modifications are introduced during transmission. Meng et al.\ \cite{mengReview} further reviewed
 recent developments in coverless steganography and highlighted that image-database
 construction and semantic indexing remain critical challenges affecting practical
 deployment.
@@ -720,6 +720,8 @@ existing approaches rely on handcrafted features, image-hashing techniques, or
 predefined mapping tables. Such mechanisms often suffer from limited semantic
 representation capability and reduced scalability when handling complex textual
 information.
+
+More recent coverless schemes have pursued robustness and capacity through neglected-dataset construction~\cite{neglected2022}, end-to-end learned hash generation~\cite{end2endHash2023}, SURF-based retrieval~\cite{surf2024}, and image-restoration front-ends~\cite{restoration2024}, while a parallel generative branch synthesises stego images by image mapping and diffusion models~\cite{imageMapping2024,diffstega2024}; broad surveys catalogue this rapid growth~\cite{coverlessSurvey2024,dlSurvey2024}. Deep image-hiding networks that embed one image within another~\cite{baluja2017,tancik2020} remain, by contrast, pixel-modifying and thus detectable.
 
 \subsection{Semantic Representation and Hash-Based Retrieval}
 Recent advances in multimedia retrieval have demonstrated that semantic
@@ -731,7 +733,7 @@ representations that capture contextual and conceptual similarities. Such
 representations facilitate robust similarity matching and improve retrieval
 performance in large-scale image databases.
 
-Hu et al.\ [9] proposed a Joint Semantic Preserving Sparse Hashing (JSPSH) framework
+Hu et al.\ \cite{huJSPSH} proposed a Joint Semantic Preserving Sparse Hashing (JSPSH) framework
 for cross-modal retrieval, in which semantic consistency between different
 modalities is maintained during the hash-learning process. Their approach
 simultaneously exploits semantic labels and sparse-representation constraints to
@@ -743,7 +745,7 @@ highlighted the importance of maintaining semantic structure during binary-code
 generation, thereby enabling efficient large-scale retrieval with reduced storage
 and computational overhead.
 
-Similarly, Li et al.\ [10] introduced a Semantic Preservation-Based Hash Code
+Similarly, Li et al.\ \cite{liSPHCG} introduced a Semantic Preservation-Based Hash Code
 Generation (SPHCG) framework for fine-grained image retrieval. Unlike conventional
 hashing methods that primarily focus on visual similarity, their approach emphasizes
 the preservation of subtle semantic distinctions among visually similar image
@@ -758,7 +760,7 @@ effective mechanism for transforming high-dimensional semantic representations i
 compact binary codes while retaining meaningful neighbourhood relationships.
 
 Although semantic-preserving hashing has achieved remarkable success in cross-modal
-retrieval and fine-grained image-retrieval applications [9,10], its integration with
+retrieval and fine-grained image-retrieval applications \cite{huJSPSH,liSPHCG}, its integration with
 coverless image steganography remains largely unexplored. Existing coverless
 communication schemes predominantly rely on perceptual similarity, image indexing,
 or handcrafted feature matching, without leveraging the semantic-understanding
@@ -801,25 +803,25 @@ coverless communication approaches, as summarised in Table~\ref{tab:gap}.
 \toprule
 References & Method & Limitation & Research Gap \\
 \midrule
-Kadhim et al.\ [1] & Spatial and transform-domain image steganography & Focuses on pixel-modification techniques and trade-offs among capacity, robustness and imperceptibility. & Need a pixel-modification-free (coverless) communication framework that completely avoids embedding artifacts. \\
-Subramanian et al.\ [2] & Transform-domain (DCT, DWT, hybrid) & Improves image quality but still modifies transform coefficients. & Develop a framework eliminating coefficient modification while preserving security through semantic image selection. \\
-Mandal et al.\ [3] & Hybrid transform-domain steganography & Vulnerable to advanced statistical and deep-learning steganalysis. & Design a steganalysis-resistant coverless communication system without altering image statistics. \\
-Kombrink et al.\ [4] & CNN-based steganalysis survey & Demonstrates high detection accuracy against conventional steganography. & Develop communication methods that generate no embedding artifacts detectable by CNN-based steganalysis. \\
-Kheddar et al.\ [5] & Deep-learning-based multimedia steganalysis & Detects subtle embedding traces even in optimized methods. & Introduce a communication paradigm based on semantic retrieval rather than embedding. \\
-Apau et al.\ [6] & Statistical analysis of modern steganography & Hidden data still leaves statistical inconsistencies. & Remove statistical footprints through coverless semantic communication. \\
-Qin et al.\ [7] & Coverless image steganography & Mainly relies on image retrieval, mapping and handcrafted descriptors. & Replace handcrafted descriptors with deep semantic embeddings and semantic hashing for robust retrieval. \\
-Meng et al.\ [8] & Coverless image steganography & Database construction and semantic indexing remain challenging. & Develop an automatic semantic hash-mapping mechanism for scalable image retrieval. \\
-Hu et al.\ [9] & Joint Semantic Preserving Sparse Hashing (JSPSH) & Designed for cross-modal retrieval, not secure communication. & Integrate semantic-preserving hashing into coverless image steganography for secure message transmission. \\
-Li et al.\ [10] & Semantic Preservation-Based Hash Code Generation (SPHCG) & Focuses on fine-grained image retrieval only. & Extend semantic hashing to coverless steganographic communication and message reconstruction. \\
+Kadhim et al.\ \cite{kadhim} & Spatial and transform-domain image steganography & Focuses on pixel-modification techniques and trade-offs among capacity, robustness and imperceptibility. & Need a pixel-modification-free (coverless) communication framework that completely avoids embedding artifacts. \\
+Subramanian et al.\ \cite{subramanian} & Transform-domain (DCT, DWT, hybrid) & Improves image quality but still modifies transform coefficients. & Develop a framework eliminating coefficient modification while preserving security through semantic image selection. \\
+Mandal et al.\ \cite{mandal} & Hybrid transform-domain steganography & Vulnerable to advanced statistical and deep-learning steganalysis. & Design a steganalysis-resistant coverless communication system without altering image statistics. \\
+Kombrink et al.\ \cite{kombrink} & CNN-based steganalysis survey & Demonstrates high detection accuracy against conventional steganography. & Develop communication methods that generate no embedding artifacts detectable by CNN-based steganalysis. \\
+Kheddar et al.\ \cite{kheddar} & Deep-learning-based multimedia steganalysis & Detects subtle embedding traces even in optimized methods. & Introduce a communication paradigm based on semantic retrieval rather than embedding. \\
+Apau et al.\ \cite{apau} & Statistical analysis of modern steganography & Hidden data still leaves statistical inconsistencies. & Remove statistical footprints through coverless semantic communication. \\
+Qin et al.\ \cite{qin} & Coverless image steganography & Mainly relies on image retrieval, mapping and handcrafted descriptors. & Replace handcrafted descriptors with deep semantic embeddings and semantic hashing for robust retrieval. \\
+Meng et al.\ \cite{mengReview} & Coverless image steganography & Database construction and semantic indexing remain challenging. & Develop an automatic semantic hash-mapping mechanism for scalable image retrieval. \\
+Hu et al.\ \cite{huJSPSH} & Joint Semantic Preserving Sparse Hashing (JSPSH) & Designed for cross-modal retrieval, not secure communication. & Integrate semantic-preserving hashing into coverless image steganography for secure message transmission. \\
+Li et al.\ \cite{liSPHCG} & Semantic Preservation-Based Hash Code Generation (SPHCG) & Focuses on fine-grained image retrieval only. & Extend semantic hashing to coverless steganographic communication and message reconstruction. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Conventional steganography techniques modify image pixels and therefore remain
-vulnerable to statistical and deep-learning-based steganalysis [3,8,9]. Existing
+vulnerable to statistical and deep-learning-based steganalysis \cite{mandal,mengReview,huJSPSH}. Existing
 coverless image-steganography approaches largely depend on handcrafted image
 descriptors, image-retrieval mechanisms, or predefined mapping rules that provide
-limited semantic expressiveness [1,5]. Current image retrieval-based systems
+limited semantic expressiveness \cite{kadhim,kheddar}. Current image retrieval-based systems
 generally focus on visual similarity rather than semantic understanding, restricting
 their ability to encode complex natural-language messages. Existing studies have not
 adequately explored the integration of Large Language Models with semantic hashing
@@ -953,7 +955,7 @@ of \Eqn{eq:nnintro} returns the correct index for every codebook image.
 Before any image is chosen, the message is wrapped in a thin layer that provides
 compression, integrity, and confidentiality. The message is first losslessly
 compressed with \textsc{zlib}, which shortens the sequence; a $32$-bit CRC is then
-appended for integrity; and the result is optionally encrypted with AES-256-CBC
+appended for integrity; and the result is optionally encrypted with AES-256-CBC~\cite{aes}
 under a $256$-bit key $\kappa$, with a random $16$-byte initialisation vector
 prepended to the ciphertext. Writing these operations explicitly, the framed
 payload is
@@ -1208,75 +1210,115 @@ management for practical multi-party use.
 
 \begin{thebibliography}{99}
 
-\bibitem{radford2021}
-A. Radford, J. W. Kim, C. Hallacy, et al.,
-``Learning transferable visual models from natural language supervision,''
-in \emph{Proc. 38th Int. Conf. Machine Learning (ICML)}, PMLR 139, pp.~8748--8763, 2021.
+\bibitem{provos2003}
+N. Provos and P. Honeyman,
+``Hide and seek: An introduction to steganography,''
+\emph{IEEE Security \& Privacy}, vol.~1, no.~3, pp.~32--44, 2003.
 
-\bibitem{zhou2015}
-Z. Zhou, H. Sun, R. Harit, X. Chen, and X. Sun,
-``Coverless image steganography without embedding,''
-in \emph{Int. Conf. Cloud Computing and Security (ICCCS)}, LNCS 9483, pp.~123--132, 2015.
-
-\bibitem{westfeld1999}
-A. Westfeld and A. Pfitzmann,
-``Attacks on steganographic systems,''
-in \emph{Information Hiding (IH 1999)}, LNCS 1768, pp.~61--76, 2000.
-
-\bibitem{boroumand2019}
-M. Boroumand, M. Chen, and J. Fridrich,
-``Deep residual network for steganalysis of digital images,''
-\emph{IEEE Trans. Information Forensics and Security}, vol.~14, no.~5, pp.~1181--1193, 2019.
-
-\bibitem{xu2016}
-G. Xu, H.-Z. Wu, and Y.-Q. Shi,
-``Structural design of convolutional neural networks for steganalysis,''
-\emph{IEEE Signal Processing Letters}, vol.~23, no.~5, pp.~708--712, 2016.
-
-\bibitem{div2k2017}
-E. Agustsson and R. Timofte,
-``NTIRE 2017 challenge on single image super-resolution: Dataset and study,''
-in \emph{Proc. IEEE Conf. Computer Vision and Pattern Recognition Workshops (CVPRW)}, pp.~126--135, 2017.
+\bibitem{simmons}
+G. J. Simmons,
+``The prisoners' problem and the subliminal channel,''
+in \emph{Advances in Cryptology (CRYPTO 1983)}, Springer, pp.~51--67, 1984.
 
 \bibitem{chan2004}
 C.-K. Chan and L. M. Cheng,
 ``Hiding data in images by simple LSB substitution,''
 \emph{Pattern Recognition}, vol.~37, no.~3, pp.~469--474, 2004.
 
-\bibitem{provos2003}
-N. Provos and P. Honeyman,
-``Hide and seek: An introduction to steganography,''
-\emph{IEEE Security \& Privacy}, vol.~1, no.~3, pp.~32--44, 2003.
-
-\bibitem{fridrich2001}
-J. Fridrich, M. Goljan, and R. Du,
-``Detecting LSB steganography in color and gray-scale images,''
-\emph{IEEE MultiMedia}, vol.~8, no.~4, pp.~22--28, 2001.
-
 \bibitem{westfeld2001f5}
 A. Westfeld,
 ``F5---a steganographic algorithm,''
 in \emph{Information Hiding (IH 2001)}, LNCS 2137, pp.~289--302, 2001.
 
-\bibitem{baluja2017}
-S. Baluja,
-``Hiding images in plain sight: Deep steganography,''
-in \emph{Advances in Neural Information Processing Systems (NeurIPS)}, pp.~2069--2079, 2017.
+\bibitem{cachin}
+C. Cachin,
+``An information-theoretic model for steganography,''
+in \emph{Information Hiding (IH 1998)}, LNCS 1525, pp.~306--318, 1998.
 
-\bibitem{tancik2020}
-M. Tancik, B. Mildenhall, and R. Ng,
-``StegaStamp: Invisible hyperlinks in physical photographs,''
-in \emph{Proc. IEEE/CVF Conf. Computer Vision and Pattern Recognition (CVPR)}, pp.~2117--2126, 2020.
+\bibitem{kerSqrt}
+A. D. Ker, T. Pevny, J. Kodovsky, and J. Fridrich,
+``The square root law of steganographic capacity,''
+in \emph{Proc. 10th ACM Workshop on Multimedia and Security}, pp.~107--116, 2008.
+
+\bibitem{xu2016}
+G. Xu, H.-Z. Wu, and Y.-Q. Shi,
+``Structural design of convolutional neural networks for steganalysis,''
+\emph{IEEE Signal Processing Letters}, vol.~23, no.~5, pp.~708--712, 2016.
+
+\bibitem{boroumand2019}
+M. Boroumand, M. Chen, and J. Fridrich,
+``Deep residual network for steganalysis of digital images,''
+\emph{IEEE Trans. Information Forensics and Security}, vol.~14, no.~5, pp.~1181--1193, 2019.
+
+\bibitem{zhou2015}
+Z. Zhou, H. Sun, R. Harit, X. Chen, and X. Sun,
+``Coverless image steganography without embedding,''
+in \emph{Int. Conf. Cloud Computing and Security (ICCCS)}, LNCS 9483, pp.~123--132, 2015.
 
 \bibitem{coverlessSurvey2024}
 X. Xiang, Y. Tan, J. Qin, and Y. Tan,
 ``Advancements and challenges in coverless image steganography: A survey,''
 \emph{Signal Processing}, vol.~228, 2024.
 
-\bibitem{dlSurvey2024}
-B. Song, P. Wei, S. Wu, Y. Lin, and W. Zhou,
-``A survey on deep-learning-based image steganography,''
-\emph{Expert Systems with Applications}, vol.~254, art.~124390, 2024.
+\bibitem{radford2021}
+A. Radford, J. W. Kim, C. Hallacy, et al.,
+``Learning transferable visual models from natural language supervision,''
+in \emph{Proc. 38th Int. Conf. Machine Learning (ICML)}, PMLR 139, pp.~8748--8763, 2021.
+
+\bibitem{subramanian}
+N. Subramanian, O. Elharrouss, S. Al-Maadeed, and A. Bouridane,
+``Image steganography: A review of the recent advances,''
+\emph{IEEE Access}, vol.~9, pp.~23409--23423, 2021.
+
+\bibitem{kombrink}
+M. H. Kombrink, Z. J. M. H. Geradts, and M. Worring,
+``Image steganography approaches and their detection strategies: A survey,''
+\emph{ACM Computing Surveys}, vol.~57, no.~2, art.~33, 2024.
+
+\bibitem{qin}
+J. Qin, Y. Luo, X. Xiang, Y. Tan, and H. Huang,
+``Coverless image steganography: A survey,''
+\emph{IEEE Access}, vol.~7, pp.~171372--171394, 2019.
+
+\bibitem{liSPHCG}
+X. Li, J. Yu, J. Cheng, Z. Li, and C. Bian,
+``Semantic preservation-based hash code generation for fine-grained image retrieval,''
+\emph{Expert Systems with Applications}, vol.~271, art.~126668, 2025.
+
+\bibitem{kadhim}
+I. J. Kadhim, P. Premaratne, P. J. Vial, and B. Halloran,
+``Comprehensive survey of image steganography: Techniques, evaluations, and trends in future research,''
+\emph{Neurocomputing}, vol.~335, pp.~299--326, 2019.
+
+\bibitem{mandal}
+P. C. Mandal, I. Mukherjee, and B. N. Chatterji,
+``Digital image steganography: A literature survey,''
+\emph{Information Sciences}, vol.~609, pp.~1451--1488, 2022.
+
+\bibitem{westfeld1999}
+A. Westfeld and A. Pfitzmann,
+``Attacks on steganographic systems,''
+in \emph{Information Hiding (IH 1999)}, LNCS 1768, pp.~61--76, 2000.
+
+\bibitem{fridrich2001}
+J. Fridrich, M. Goljan, and R. Du,
+``Detecting LSB steganography in color and gray-scale images,''
+\emph{IEEE MultiMedia}, vol.~8, no.~4, pp.~22--28, 2001.
+
+\bibitem{kheddar}
+H. Kheddar, M. Hemis, Y. Himeur, D. Megias, and A. Amira,
+``Deep learning for steganalysis of diverse data types: A review of methods, taxonomy, challenges and future directions,''
+\emph{Neurocomputing}, vol.~581, art.~127528, 2024.
+
+\bibitem{apau}
+R. Apau, M. Asante, F. Twum, J. B. Hayfron-Acquah, and K. O. Peasah,
+``Image steganography techniques for resisting statistical steganalysis attacks: A systematic literature review,''
+\emph{PLOS ONE}, vol.~19, no.~9, art.~e0308807, 2024.
+
+\bibitem{mengReview}
+L. Meng, X. Jiang, and T. Sun,
+``A review of coverless steganography,''
+\emph{Neurocomputing}, vol.~566, art.~126945, 2024.
 
 \bibitem{neglected2022}
 L. Zou, J. Li, W. Wan, Q. M. J. Wu, and J. Sun,
@@ -1307,6 +1349,50 @@ Q. Zhang and F. Huang,
 Y. Yang, Z. Liu, J. Jia, Z. Gao, Y. Li, W. Sun, X. Liu, and G. Zhai,
 ``DiffStega: Towards universal training-free coverless image steganography with diffusion models,''
 in \emph{Proc. 33rd Int. Joint Conf. Artificial Intelligence (IJCAI)}, 2024.
+
+\bibitem{dlSurvey2024}
+B. Song, P. Wei, S. Wu, Y. Lin, and W. Zhou,
+``A survey on deep-learning-based image steganography,''
+\emph{Expert Systems with Applications}, vol.~254, art.~124390, 2024.
+
+\bibitem{baluja2017}
+S. Baluja,
+``Hiding images in plain sight: Deep steganography,''
+in \emph{Advances in Neural Information Processing Systems (NeurIPS)}, pp.~2069--2079, 2017.
+
+\bibitem{tancik2020}
+M. Tancik, B. Mildenhall, and R. Ng,
+``StegaStamp: Invisible hyperlinks in physical photographs,''
+in \emph{Proc. IEEE/CVF Conf. Computer Vision and Pattern Recognition (CVPR)}, pp.~2117--2126, 2020.
+
+\bibitem{huJSPSH}
+Z. Hu, Y.-M. Cheung, M. Li, W. Lan, D. Zhang, and Q. Liu,
+``Joint semantic preserving sparse hashing for cross-modal retrieval,''
+\emph{IEEE Trans. Circuits Syst. Video Technol.}, vol.~34, no.~4, pp.~2989--3002, 2024.
+
+\bibitem{aes}
+J. Daemen and V. Rijmen,
+\emph{The Design of Rijndael: The Advanced Encryption Standard (AES)}, 2nd ed. Springer, 2020.
+
+\bibitem{ucid}
+G. Schaefer and M. Stich,
+``UCID: An uncompressed color image database,''
+in \emph{Proc. SPIE 5307, Storage and Retrieval Methods and Applications for Multimedia}, pp.~472--480, 2003.
+
+\bibitem{uscsipi}
+A. G. Weber,
+``The USC-SIPI image database,''
+Signal and Image Processing Institute, Univ. of Southern California, Tech. Rep., 1997.
+
+\bibitem{div2k2017}
+E. Agustsson and R. Timofte,
+``NTIRE 2017 challenge on single image super-resolution: Dataset and study,''
+in \emph{Proc. IEEE Conf. Computer Vision and Pattern Recognition Workshops (CVPRW)}, pp.~126--135, 2017.
+
+\bibitem{ssim}
+Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli,
+``Image quality assessment: From error visibility to structural similarity,''
+\emph{IEEE Trans. Image Processing}, vol.~13, no.~4, pp.~600--612, 2004.
 
 \end{thebibliography}
 

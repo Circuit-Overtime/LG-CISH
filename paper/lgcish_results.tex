@@ -55,7 +55,7 @@ recognised as ordinary, uncompressed photographs rather than artefacts) and
 reliability (the images must be mutually separable in semantic space so that
 nearest-neighbour recovery is unambiguous). For these reasons the codebook was not
 drawn from a single source but \emph{augmented} from three widely used,
-publicly available benchmark suites, summarised in Table~\ref{tab:datasets}.
+publicly available benchmark suites~\cite{ucid,uscsipi}, summarised in Table~\ref{tab:datasets}.
 
 \begin{table}[H]
 \centering
@@ -79,7 +79,7 @@ which avoids pre-existing compression artefacts that would otherwise bias the
 robustness and steganalysis measurements. \emph{Third}, pooling heterogeneous
 sources maximises visual and semantic diversity, which is exactly the property that
 the separation constraint of the codebook requires. A high-resolution set such as
-DIV2K was also considered, but the three chosen suites already provide sufficient
+DIV2K~\cite{div2k2017} was also considered, but the three chosen suites already provide sufficient
 diversity at the working resolution without the storage overhead of $2$K imagery.
 
 The augmented codebook was then constructed by pooling the three suites, normalising
@@ -140,7 +140,7 @@ Hardware & RTX 3050 6\,GB, 16-core CPU \\
 % ===================================================================
 Imperceptibility measures how far a transmitted object departs, visually and
 statistically, from an ordinary image. It is quantified by the peak
-signal-to-noise ratio and the structural similarity index between the cover $X$ and
+signal-to-noise ratio and the structural similarity index~\cite{ssim} between the cover $X$ and
 the transmitted object $Y$,
 \begin{equation}
   \mathrm{PSNR}(X,Y)=10\log_{10}\frac{255^2}{\mathrm{MSE}(X,Y)},
@@ -596,5 +596,27 @@ the message.}
 % -------------------------------------------------------------------
 
 \ifdefined\LGCISHMAIN\else
+\begin{thebibliography}{9}
+\bibitem{ssim}
+Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli,
+``Image quality assessment: From error visibility to structural similarity,''
+\emph{IEEE Trans. Image Processing}, vol.~13, no.~4, pp.~600--612, 2004.
+
+\bibitem{ucid}
+G. Schaefer and M. Stich,
+``UCID: An uncompressed color image database,''
+in \emph{Proc. SPIE 5307, Storage and Retrieval Methods and Applications for Multimedia}, pp.~472--480, 2003.
+
+\bibitem{uscsipi}
+A. G. Weber,
+``The USC-SIPI image database,''
+Signal and Image Processing Institute, Univ. of Southern California, Tech. Rep., 1997.
+
+\bibitem{div2k2017}
+E. Agustsson and R. Timofte,
+``NTIRE 2017 challenge on single image super-resolution: Dataset and study,''
+in \emph{Proc. IEEE Conf. Computer Vision and Pattern Recognition Workshops (CVPRW)}, pp.~126--135, 2017.
+
+\end{thebibliography}
 \end{document}
 \fi
