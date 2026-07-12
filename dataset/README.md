@@ -41,6 +41,6 @@ nearest-neighbour search even after JPEG/resize/noise/crop in transit.
 Use the metadata in [`CITATION.cff`](CITATION.cff), or the plain-text form:
 
 > LG-CISH Codebook Dataset: a 40-image augmented codebook for coverless image
-> steganography. GitHub, 2026. Available: `https://github.com/<user>/<repo>`
+> steganography. GitHub, 2026. Available: `https://github.com/Circuit-Overtime/LG-CISH`
 
 *(Replace the URL — and, if minted, add a DOI — in `CITATION.cff` and above.)*
