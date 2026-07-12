@@ -181,7 +181,7 @@ its limit usually sacrifices robustness. This inverse relationship among the thr
 objectives is depicted in Figure~\ref{fig:tradeoff}. The design philosophy of
 LG-CISH is to abandon the capacity corner in exchange for the other two: by
 accepting a low raw bits-per-pixel rate it obtains \emph{both} maximal
-imperceptibility (Equation~\eqref{eq:infpsnr}) and high robustness
+imperceptibility (Eqn~\eqref{eq:infpsnr}) and high robustness
 (Section~\ref{sec:robustness}), a combination that pixel-domain methods cannot reach.
 
 \begin{figure}[H]
@@ -214,7 +214,7 @@ imperceptibility--robustness edge.}
 % ===================================================================
 \subsection{Payload Capacity}\label{sec:rescap}
 % ===================================================================
-Capacity is the price paid for the imperceptibility of Equation~\eqref{eq:infpsnr}.
+Capacity is the price paid for the imperceptibility of Eqn~\eqref{eq:infpsnr}.
 It is reported at two granularities. Per image, the base-$40$ code carries
 $\log_2 40\approx5.322$ bits, and a distinct-image permutation code carries slightly
 fewer bits per image in exchange for a no-repeat guarantee that improves cover
@@ -228,7 +228,7 @@ of
 some five orders of magnitude below the $\approx 3$\,bpp of LSB. This large gap is
 the concrete manifestation of the trade-off triangle: LG-CISH concedes the capacity
 corner entirely, and it is precisely this concession that buys the infinite PSNR of
-Equation~\eqref{eq:infpsnr} and the robustness of Section~\ref{sec:robustness}.
+Eqn~\eqref{eq:infpsnr} and the robustness of Section~\ref{sec:robustness}.
 Table~\ref{tab:capacity} places the methods on the capacity--distortion axis, and
 Figure~\ref{fig:paycurve} confirms that reconstruction remains lossless as the
 payload (and hence the number of images) grows.
@@ -378,7 +378,7 @@ each image's index as a retrieval decision, the standard classification metrics
 --- accuracy, precision, recall, and $F_1$ --- are reported in
 Table~\ref{tab:prf1}. On a clean channel the top-1 index is recovered for every
 image, so all four metrics equal $100\%$, the symbol error rate is zero, and,
-through Equation~\eqref{eq:ber}, the bit error rate is likewise zero. Over $N{=}50$
+through Eqn~\eqref{eq:ber}, the bit error rate is likewise zero. Over $N{=}50$
 independent trials these values are perfectly stable (Table~\ref{tab:stats}), with a
 CLIP margin of $0.302\pm0.006$.
 
