@@ -3,7 +3,7 @@
 %  Inline: Introduction, Related Work, Proposed Method, Discussion, Conclusion.
 %  Modular \input: algorithms.tex (Alg 1-5) and lgcish_results.tex (results).
 %  Figures from ../LG-COSH/evaluation/figures/. Conventions: passive voice,
-%  "Figure~\ref" and "Eqn~\eqref".
+%  "Figure~\ref" and "Equation~\eqref".
 % ===================================================================
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
@@ -12,6 +12,10 @@
 \usepackage{booktabs}
 \usepackage{float}
 \usepackage{xcolor}
+\usepackage{caption}
+\usepackage{etoolbox}
+\usepackage{ragged2e}
+\usepackage{titlesec}
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows.meta,calc,fit,shapes.geometric,backgrounds}
 \usepackage[hidelinks]{hyperref}
@@ -19,6 +23,27 @@
 
 \graphicspath{{../LG-COSH/evaluation/figures/}}
 \def\LGCISHMAIN{}   % tells lgcish_results.tex it is being \input, not standalone
+
+% --- document alignment and typography ---
+\setcounter{secnumdepth}{3}
+\titleformat{\section}
+  {\normalfont\Large\bfseries\raggedright}{\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\raggedright}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\raggedright}{\thesubsubsection}{1em}{}
+\titleformat{\paragraph}[runin]
+  {\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\captionsetup{font=normalsize,justification=centering,singlelinecheck=false}
+\AtBeginEnvironment{table}{\centering}
+\AtBeginEnvironment{figure}{\centering}
+\AtBeginEnvironment{thebibliography}{\fontsize{12}{14.4}\selectfont}
+\AtBeginDocument{\justifying}
+
+% Left-aligned abstract heading with justified abstract text.
+\renewenvironment{abstract}{%
+  \par\noindent\textbf{\abstractname}\par\medskip\justifying
+}{\par\medskip}
 
 % --- theorem-like environments ---
 \theoremstyle{definition}
@@ -43,7 +68,8 @@
 \newcommand{\Indd}{\hspace*{2.6em}}
 \newcommand{\Cmt}[1]{\hfill{\footnotesize$\triangleright$\,\textit{#1}}}
 \newcommand{\concat}{\,\Vert\,}
-\newcommand{\Eqn}[1]{Eqn~\eqref{#1}}
+\newcommand{\Eqn}[1]{Equation~\eqref{#1}}
+\newcommand{\Eqns}[2]{Equations~\eqref{#1}--\eqref{#2}}
 \newcommand{\Fig}[1]{Figure~\ref{#1}}
 \newcommand{\Tab}[1]{Table~\ref{#1}}
 
@@ -224,7 +250,9 @@ images the mean squared error and the peak signal-to-noise ratio are
   \mathrm{PSNR}(X,Y) &= 10\,\log_{10}\!\frac{V_{\max}^2}{\mathrm{MSE}(X,Y)}\ \ [\mathrm{dB}],
   \label{eq:psnr}
 \end{align}
-with $V_{\max}=255$ for 8-bit images. Perceptual quality is frequently summarised
+Equations~\eqref{eq:mse} and~\eqref{eq:psnr} define the distortion and its
+logarithmic quality scale, respectively, with $V_{\max}=255$ for 8-bit images.
+Perceptual quality is frequently summarised
 by the structural similarity index
 \begin{equation}
   \mathrm{SSIM}(X,Y)=\frac{(2\mu_X\mu_Y+C_1)(2\sigma_{XY}+C_2)}
@@ -232,13 +260,15 @@ by the structural similarity index
   \label{eq:ssim}
 \end{equation}
 where $\mu,\sigma$ denote local means, variances, and covariance, and $C_1,C_2$ are
-stabilising constants. The amount of secret data carried is measured by the
+stabilising constants; Equation~\eqref{eq:ssim} therefore complements PSNR with a
+structure-aware quality measure. The amount of secret data carried is measured by the
 relative payload (embedding rate)
 \begin{equation}
   \alpha=\frac{|m|}{n}\quad[\mathrm{bits\ per\ pixel}].
   \label{eq:rate}
 \end{equation}
-It is intuitively clear, and made precise below, that larger $\alpha$ forces larger
+Equation~\eqref{eq:rate} normalises the payload by image size. It is intuitively
+clear, and made precise below, that larger $\alpha$ forces larger
 distortion and hence a larger statistical footprint. This tension is the central
 obstacle that the present work seeks to avoid rather than merely to balance.
 
@@ -269,7 +299,8 @@ and a scheme is called $\varepsilon$-secure when
   \qquad\text{with perfect security at } \varepsilon=0 .
   \label{eq:cachin}
 \end{equation}
-The operational meaning of \Eqn{eq:kl} is exposed by hypothesis testing. For any
+The security criterion in \Eqn{eq:cachin} makes perfect security the zero-divergence
+case. The operational meaning of \Eqn{eq:kl} is exposed by hypothesis testing. For any
 warden detector $f$ with false-alarm probability $P_{\mathrm{FA}}$ and
 missed-detection probability $P_{\mathrm{MD}}$, the average error under equal
 priors is
@@ -277,7 +308,8 @@ priors is
   P_E=\tfrac{1}{2}\bigl(P_{\mathrm{FA}}+P_{\mathrm{MD}}\bigr),
   \label{eq:perr}
 \end{equation}
-and this error is bounded below, through Pinsker's inequality, by the divergence
+The detector error in \Eqn{eq:perr} is bounded below, through Pinsker's inequality,
+by the divergence
 in \Eqn{eq:kl}:
 \begin{equation}
   P_E \;\ge\; \frac{1}{2}-\sqrt{\tfrac{1}{2}\,D\!\left(P_C\|P_S\right)} .
@@ -300,7 +332,7 @@ XuNet~\cite{xu2016} and SRNet~\cite{boroumand2019} approach these theoretical
 limits in practice, detecting embedding at rates once believed safe. Embedding
 steganography is thus squeezed from both sides: distortion is unavoidable
 (\Eqn{eq:psnr}), and even small distortion is increasingly detectable
-(\Eqn{eq:pinsker}--\ref{eq:sqrtlaw}).
+(\Eqns{eq:pinsker}{eq:sqrtlaw}).
 
 \subsection{Detector performance and the cost of a single error}\label{sec:detector}
 Two further quantities are used later and are introduced here for completeness. The
@@ -311,7 +343,8 @@ is often summarised by the deflection coefficient
   d^2=\frac{(\Delta\mu)^2}{\sigma^2},
   \label{eq:deflection}
 \end{equation}
-a larger $d^2$ meaning an easier detection problem; for an unmodified transmitted
+According to \Eqn{eq:deflection}, a larger $d^2$ means an easier detection problem;
+for an unmodified transmitted
 object $\Delta\mu=0$ and hence $d^2=0$. The overall quality of a detector across all
 thresholds is reported by the area under its receiver-operating-characteristic
 curve, $\mathrm{AUC}\in[\tfrac12,1]$, with $\mathrm{AUC}=\tfrac12$ corresponding to
@@ -491,6 +524,7 @@ so that the similarity in \Eqn{eq:nnintro} is the cosine (inner) product
   s(a,b)=\langle a,b\rangle = a^{\!\top}b\in[-1,1].
   \label{eq:cosintro}
 \end{equation}
+Equation~\eqref{eq:cosintro} is the similarity score used for semantic matching.
 Because CLIP is trained to place \emph{semantically} similar images near one
 another, its embedding of a JPEG-compressed, resized, or partially cropped image
 stays close to the embedding of the original: the visual meaning survives even
@@ -584,7 +618,8 @@ $H(m)$ bits on average,
   \mathbb{E}\!\left[\,|\textsc{zlib}(m)|\,\right]\ \ge\ \frac{H(m)}{8}\quad[\mathrm{bytes}],
   \label{eq:shannon}
 \end{equation}
-and the compressor of \Eqn{eq:zlib} is used precisely to push the encoded size
+Equation~\eqref{eq:shannon} supplies the theoretical lower bound, and the compressor
+of \Eqn{eq:zlib} is used precisely to push the encoded size
 towards this floor before any image is chosen. Once the framed payload occupies
 $|f|$ bytes, the base-$N$ code of \Eqn{eq:capimg} produces an expected sequence
 length
@@ -620,8 +655,8 @@ Long (200--1000 chars) & $\sim$2100 & $\sim$400 & asymptotic ($5.322$ b/img) \\
 The preceding development frames the problem addressed in this paper. \emph{Given}
 a shared image database and a shared vision--language model, a scheme is sought
 that (i) transmits only unmodified natural images, so that
-\Eqn{eq:coverless}--\ref{eq:chance} hold and detection is reduced to chance;
-(ii) is lossless, so that \Eqn{eq:berintro}--\ref{eq:mutual} hold on a clean
+\Eqns{eq:coverless}{eq:chance} hold and detection is reduced to chance;
+(ii) is lossless, so that \Eqns{eq:berintro}{eq:mutual} hold on a clean
 channel; and (iii) recovers correctly after realistic transport, so that
 \Eqn{eq:marginintro} is satisfied across compression, noise, resizing, and
 cropping. The following contributions are made:
@@ -632,7 +667,7 @@ cropping. The following contributions are made:
         \S\ref{sec:method}).
   \item Two interchangeable lossless codes are formalised --- base-$N$ positional
         coding at the $\log_2 N$ ceiling (\Eqn{eq:capimg}) and Lehmer-permutation
-        coding with a no-repeat guarantee (\Eqn{eq:pnb}--\ref{eq:capperm}) ---
+        coding with a no-repeat guarantee (\Eqns{eq:pnb}{eq:capperm}) ---
         together with a whitening step that removes an ordering artefact.
   \item A confidentiality and integrity layer (AES-256-CBC, CRC-32) and an optional
         large-language-model-verified alias mechanism for cover plausibility are
@@ -790,7 +825,7 @@ understanding is rarely incorporated into the communication pipeline.
 Consequently, there exists a significant opportunity to leverage LLM-driven semantic
 encoding for secure image-based communication systems.
 
-\subsection{Research Gap and Motivation}
+\subsection{Research Gap and Motivation}\label{sec:motivation}
 The literature reveals several important limitations in existing steganographic and
 coverless communication approaches, as summarised in Table~\ref{tab:gap}.
 
@@ -801,7 +836,8 @@ coverless communication approaches, as summarised in Table~\ref{tab:gap}.
 \renewcommand{\arraystretch}{1.25}
 \begin{tabular}{@{}p{2.05cm}p{2.55cm}p{4.05cm}p{4.35cm}@{}}
 \toprule
-References & Method & Limitation & Research Gap \\
+{\normalsize\bfseries References} & {\normalsize\bfseries Method} &
+{\normalsize\bfseries Limitation} & {\normalsize\bfseries Research Gap} \\
 \midrule
 Kadhim et al.\ \cite{kadhim} & Spatial and transform-domain image steganography & Focuses on pixel-modification techniques and trade-offs among capacity, robustness and imperceptibility. & Need a pixel-modification-free (coverless) communication framework that completely avoids embedding artifacts. \\
 Subramanian et al.\ \cite{subramanian} & Transform-domain (DCT, DWT, hybrid) & Improves image quality but still modifies transform coefficients. & Develop a framework eliminating coefficient modification while preserving security through semantic image selection. \\
@@ -838,9 +874,26 @@ through reverse semantic mapping. By eliminating pixel modification entirely, th
 proposed framework aims to achieve high steganalysis resistance while simultaneously
 exploiting the semantic-reasoning capabilities of modern Large Language Models.
 
+\subsection{Research Objectives}\label{sec:objectives}
+Following directly from the motivation in Section~\ref{sec:motivation}, the
+research objectives are to:
+\begin{enumerate}
+  \item design a coverless communication mechanism that carries information through
+        the identity and order of unmodified natural images rather than through
+        pixel or transform-coefficient modification;
+  \item construct the Architecture Model of Section~\ref{sec:architecture}, in
+        which cryptographic framing, lossless positional coding, semantic image
+        retrieval, and exact decoding form a single reproducible pipeline;
+  \item use CLIP semantic embeddings to maintain reliable image-index recovery
+        after content-preserving channel operations such as JPEG compression,
+        resizing, noise, and cropping; and
+  \item evaluate the resulting system in terms of losslessness, payload capacity,
+        channel robustness, steganalysis resistance, and cover plausibility.
+\end{enumerate}
+
 \section{Proposed Method}\label{sec:method}
 % ###################################################################
-\subsection{Overview}\label{sec:overview}
+\subsection{Architecture Model}\label{sec:architecture}
 The proposed method is a lossless, coverless pipeline in which a secret message is
 carried by an ordered sequence of unmodified codebook images. The sender and the
 receiver are assumed to share, offline, three artefacts: an image database, the
@@ -851,8 +904,9 @@ indices by one of two lossless codes, and finally emitted as the corresponding
 images. The images traverse an arbitrary lossy channel. On the receiver side each
 received image is embedded with CLIP and matched to the nearest codebook entry to
 recover its index, after which the coding and cryptographic steps are inverted to
-reconstruct the message exactly. The end-to-end flow is shown in
-\Fig{fig:flow}. Each component is developed in turn in the following subsections.
+reconstruct the message exactly. This Architecture Model is illustrated in
+\Fig{fig:flow} and is referred to throughout the encoding, decoding, and evaluation
+stages. Each component is developed in turn in the following subsections.
 
 The architecture is organised around a deliberate separation of concerns, each
 concern being handled by a distinct stage so that the stages can be reasoned about
@@ -1065,7 +1119,7 @@ compactness or plausibility is the more pressing requirement.
 
 \subsubsection{LG-CISH encoding}\label{sec:encode}
 The complete sender procedure is assembled in Algorithm~\ref{alg:encode}. The
-message is framed by \Eqn{eq:zlib}--\ref{eq:wrapmethod}, mapped to the integer $v$
+message is framed by \Eqns{eq:zlib}{eq:wrapmethod}, mapped to the integer $v$
 by \Eqn{eq:intmethod}, converted to indices by either \Eqn{eq:basenmethod} or the
 whitened Lehmer code of \Eqn{eq:whitenmethod}, and finally realised as images. When
 the optional alias mechanism of \S\ref{sec:aliases} is enabled, the image chosen
@@ -1090,7 +1144,7 @@ positive; under Definition~\ref{def:sep} and adequate transport stability this
 holds for every position, so the index stream is recovered without error. The
 recovered indices are then passed back through the inverse coding
 (\Eqn{eq:basenmethod} or the un-whitened Lehmer inverse of
-\Eqn{eq:lehmermethod}--\ref{eq:whitenmethod}) to reconstruct the integer $v$, the
+\Eqns{eq:lehmermethod}{eq:whitenmethod}) to reconstruct the integer $v$, the
 sentinel byte is stripped to obtain $f$, and $\textsc{unwrap}$ verifies the CRC and
 inverts the encryption and compression. The procedure is given in
 Algorithm~\ref{alg:decode}.
@@ -1100,7 +1154,7 @@ If every index is recovered correctly, i.e.\ $\gamma_t>0$ for all $t$ in
 \Eqn{eq:marginintro}, then $\textsc{Decode}(\textsc{Encode}(m))=m$ exactly and
 $\mathrm{BER}=0$. This follows because each stage
 --- \Eqn{eq:zlib}, \Eqn{eq:wrapmethod}, \Eqn{eq:intmethod}, \Eqn{eq:basenmethod},
-and \Eqn{eq:lehmermethod}--\ref{eq:whitenmethod} --- is a bijection and is inverted
+and \Eqns{eq:lehmermethod}{eq:whitenmethod} --- is a bijection and is inverted
 in reverse order.
 \end{proposition}
 
@@ -1117,7 +1171,8 @@ encoder and then compared against the $N$ codebook embeddings, giving a cost of
   \mathcal{O}\!\left(L\cdot\bigl(C_\Phi + N d\bigr)\right),
   \label{eq:complexity}
 \end{equation}
-where $C_\Phi$ is the cost of a single CLIP forward pass and $d=512$ is the
+In \Eqn{eq:complexity}, $C_\Phi$ is the cost of a single CLIP forward pass and
+$d=512$ is the
 embedding dimension. The nearest-neighbour term $Nd$ is negligible beside the
 forward pass $C_\Phi$, so decoding time scales essentially linearly in the number
 of received images and is governed by the throughput of the image encoder. The
@@ -1188,7 +1243,7 @@ database. Taken together, the results indicate that a coverless channel built on
 semantic hashing can attain, simultaneously, the imperceptibility and robustness
 that pixel-domain methods must trade against one another.
 
-\subsection*{Future Scope}
+\subsection{Future Scope}\label{sec:future}
 Several directions are left for future work. \emph{First}, the codebook can be
 scaled from the present $N{=}40$ to $N{=}10^{3}$--$10^{4}$ images, which raises the
 per-image capacity to $10$--$13$ bits and shortens the transmitted sequence, subject
@@ -1207,7 +1262,11 @@ coverless video and audio channels, and validated in a real-world deployment ove
 public messaging platforms, together with a study of database versioning and key
 management for practical multi-party use.
 
+\noindent The implementation, evaluation scripts, and released LG-CISH codebook are
+available in the project repository on GitHub~\cite{lgcishdata}.
 
+\begingroup
+\fontsize{12}{14.4}\selectfont
 \begin{thebibliography}{99}
 
 \bibitem{provos2003}
@@ -1405,5 +1464,6 @@ Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli,
 \emph{IEEE Trans. Image Processing}, vol.~13, no.~4, pp.~600--612, 2004.
 
 \end{thebibliography}
+\endgroup
 
 \end{document}
