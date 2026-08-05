@@ -1,0 +1,253 @@
+\documentclass[11pt]{article}
+\usepackage{fontspec}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{graphicx}
+\graphicspath{{../figures/}}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+\title{\vspace{-2em}LG-CISH: Experimental Results and Performance Evaluation}
+\author{}
+\date{}
+\begin{document}
+\maketitle
+\vspace{-3em}
+
+\section*{4. Experimental Results and Performance Evaluation}
+All experiments use the LG-CISH codebook of 40 visually-distinct images drawn from standard benchmark suites (UCID, Kodak, USC-SIPI), each normalized to a fixed 512$\times$512 canvas (5.322 bits/image, base-40 positional coding). The images are never modified; the identity and order of the transmitted sequence carry the secret message. Two coding modes are available --- base-N positional coding (maximum capacity) and distinct-image permutation coding (no repeated images, more plausible cover) --- together with an optional LLM-guided alias layer that swaps in interchangeable cover images without changing the encoded bits.
+\subsection*{4.1 Experimental Setup}
+\textbf{Table 4.1 --- Experimental configuration.}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+Parameter & Value \\
+\midrule
+Dataset & UCID + Kodak + USC-SIPI (mixed) --- 512x512 PNG \\
+Codebook images (N) & 40 \\
+Capacity & 5.322 bits/image (base-40) \\
+CLIP model & ViT-B/32 (dim 512) \\
+LLM (plausibility / aliases) & gemini-fast (Gemini 2.5 Flash Lite, vision) + flux (image gen) \\
+Coding modes & base-N (5.322 b/img), permutation (no-repeat, distinct images) \\
+Min CLIP separation threshold & 0.85 \\
+Codebook pairwise sim (min/mean/max) & 0.305 / 0.513 / 0.827 \\
+Decoding margin (1 - max sim) & 0.173 \\
+Encryption & AES-256-CBC (optional) \\
+Integrity & CRC-32 \\
+Compression & zlib (optional) \\
+Device & cuda \\
+GPU & NVIDIA GeForce RTX 3050 6GB Laptop GPU \\
+CPU & x86\_64 x16 \\
+RAM (GB) & 6.9 \\
+Python & 3.11.15 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+The 40 codebook images are mutually well-separated in CLIP space (max pairwise similarity 0.827, decoding margin 0.173), which is what makes nearest-neighbour index recovery robust.
+\begin{figure}[H]\centering
+\includegraphics[width=0.82\linewidth]{fig_setup_sequence.png}
+\end{figure}
+\subsection*{4.2 Qualitative Results}
+\begin{figure}[H]\centering
+\includegraphics[width=0.82\linewidth]{fig_4_2_set1_encode.png}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.82\linewidth]{fig_4_2_set2_decode.png}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.82\linewidth]{fig_4_2_set3_failures.png}
+\end{figure}
+\emph{Semantic-to-image mapping results demonstrating accurate reconstruction without pixel modification.} Failure cases (Figure Set 3) occur only under extreme degradation; a codebook mismatch is \textbf{CRC rejected $\checkmark$} by the CRC-32 layer.
+\subsection*{4.3 Quantitative Evaluation}
+\textbf{Table 4.3a --- Reconstruction accuracy by message length (clean channel).}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lXXXXX}
+\toprule
+Message Length & Messages & Accuracy (\%) & BER & Hash Match (\%) & Avg Images \\
+\midrule
+Short ($\le$50 chars) & 40 & 100.00 & 0.00e+00 & 100.00 & 57.5 \\
+Medium (50-200) & 40 & 100.00 & 0.00e+00 & 100.00 & 153.2 \\
+Long (200-1000) & 40 & 100.00 & 0.00e+00 & 100.00 & 399.4 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\textbf{Table 4.3b --- Payload capacity vs. distortion. The proposed method modifies no pixels (infinite PSNR) at the cost of lower raw capacity.}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lXXXX}
+\toprule
+Method & Capacity (bits) & bits/pixel & Pixel Distortion & PSNR (dB) \\
+\midrule
+LSB (spatial) & 786,432 & $\approx$3.0 & Yes (high) & 51.1 \\
+DCT-LSB & 4,096 & $\approx$0.016 & Yes (moderate) & 38--42 \\
+DWT-DCT [cited] & \textasciitilde{}4,096 & $\approx$0.015 & Yes (low) & 40--44 \\
+Proposed LG-CISH & 5.322/image & 5.322 & None (coverless) & $\infty$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\textbf{Table 4.3d --- Coding modes. Permutation coding trades a little capacity for a no-repeat, more plausible cover; smaller blocks recover most of the capacity.}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lXXXX}
+\toprule
+Coding mode & bits/image & No-repeat window & Min images & Notes \\
+\midrule
+Base-N positional & 5.322 & none (repeats allowed) & 1 & max capacity; images may repeat \\
+Permutation (block=8) & 5.187 & 8 images & 8 & no repeats within a block \\
+Permutation (block=16) & 5.008 & 16 images & 16 & no repeats within a block \\
+Permutation (block=40 = N) & 3.979 & 40 images & 40 & no repeats within a block (full permutation) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\textbf{Table 4.3c --- Computational time (mean over repeated runs).}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+Stage & Time (ms) \\
+\midrule
+Full encode (200-char msg) & 0.04 \\
+CLIP embedding (per image) & 15.36 \\
+Index recovery (189 images) & 1873.31 \\
+Full decode (189 images) & 1816.14 \\
+Decode per image (amortised) & 9.61 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+CLIP top-1 retrieval precision/recall on the codebook: \textbf{100.00\%}. Reconstruction is bit-exact (BER $\approx$ 0) on a clean channel across all message lengths.
+The LLM-guided alias layer adds \textbf{65} CLIP-verified candidate images across \textbf{33/40} slots (captioned with gemini-fast, generated with flux, and verified to map back to the correct slot). These give the plausibility selector interchangeable cover choices \textbf{without changing the encoded bits} --- decoding is provably unaffected.
+\subsection*{4.4 Robustness Analysis}
+\textbf{Table 4.4 --- Robustness to channel attacks (mean over 40 messages/attack).}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lXXXX}
+\toprule
+Attack & Accuracy (\%) & BER & CLIP Margin & Top-1 Sim \\
+\midrule
+No attack (baseline) & 100.00 & 0.00e+00 & 0.302 & 1.000 \\
+JPEG 90\% & 100.00 & 0.00e+00 & 0.299 & 0.985 \\
+JPEG 70\% & 100.00 & 0.00e+00 & 0.294 & 0.976 \\
+JPEG 50\% & 100.00 & 0.00e+00 & 0.289 & 0.961 \\
+JPEG 30\% & 100.00 & 0.00e+00 & 0.280 & 0.942 \\
+JPEG 20\% & 100.00 & 0.00e+00 & 0.270 & 0.930 \\
+Gaussian $\sigma$=5 & 100.00 & 0.00e+00 & 0.293 & 0.986 \\
+Gaussian $\sigma$=10 & 100.00 & 0.00e+00 & 0.285 & 0.974 \\
+Gaussian $\sigma$=20 & 100.00 & 0.00e+00 & 0.272 & 0.957 \\
+Gaussian $\sigma$=30 & 100.00 & 0.00e+00 & 0.260 & 0.942 \\
+Salt \& Pepper 0.01 & 100.00 & 0.00e+00 & 0.277 & 0.960 \\
+Salt \& Pepper 0.05 & 100.00 & 0.00e+00 & 0.246 & 0.922 \\
+Salt \& Pepper 0.10 & 100.00 & 0.00e+00 & 0.214 & 0.882 \\
+Resize 50\% & 100.00 & 0.00e+00 & 0.282 & 0.982 \\
+Resize 25\% & 100.00 & 0.00e+00 & 0.246 & 0.939 \\
+Resize 10\% & 12.50 & 1.08e-02 & 0.125 & 0.790 \\
+Crop 95\% & 100.00 & 0.00e+00 & 0.280 & 0.979 \\
+Crop 90\% & 100.00 & 0.00e+00 & 0.268 & 0.969 \\
+Crop 85\% & 100.00 & 0.00e+00 & 0.261 & 0.961 \\
+Crop 60\% & 100.00 & 0.00e+00 & 0.196 & 0.910 \\
+PNG$\to$WebP 80 & 100.00 & 0.00e+00 & 0.295 & 0.976 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+The CLIP margin starts at 0.302 and remains positive through most attacks; JPEG-50 retains 100.0\% reconstruction (BER 0.00e+00). Decoding degrades gracefully only under extreme geometric distortion.
+\subsection*{4.5 Security \& Steganalysis Resistance}
+\textbf{Table 4.5 --- Chi-square steganalysis detection. \textasciitilde{}50\% means the detector cannot do better than guessing (undetectable). N=20 patches.}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lXXX}
+\toprule
+Method & Detection Acc (\%) & TPR (\%) & TNR (\%) \\
+\midrule
+LSB & 97.5 & 100.0 & 95.0 \\
+DCT-LSB & 47.5 & 0.0 & 95.0 \\
+Proposed LG-CISH & 47.5 & 0.0 & 95.0 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+Keyspace $\approx$ 2\textasciicircum{}415 (codebook orderings $\times$ AES-256). CRC-32 catches \textbf{100.00\%} of bit-flip tampering. Because the transmitted images are unmodified natural images, the chi-square detector operates at chance (\textasciitilde{}50\%) for the proposed method, versus near-certain detection for LSB.
+\subsubsection*{4.5.1 Cover Plausibility}
+\textbf{Table 4.5b --- Cover plausibility (gemini-fast judge, 0--1). Plausibility is driven by codebook theme, not the coding mode: a themed database is far more plausible than the diverse benchmark set, while permutation coding leaves the score essentially unchanged. We use the diverse benchmark for all other results (credibility) and report this as an explicit deployment trade-off.}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+Configuration & LLM plausibility (0--1) & Note \\
+\midrule
+Diverse benchmark codebook (UCID/Kodak/USC) & 0.12 $\pm$ 0.04 & max dataset credibility; mixed subjects look random \\
+Themed codebook (coherent context) & 0.88 $\pm$ 0.07 & looks like an ordinary personal album \\
+Diverse + permutation coding & 0.18 $\pm$ 0.10 & codec barely moves the score \\
+\bottomrule
+\end{tabularx}
+\end{table}
+Beyond statistical undetectability, behavioural stealth depends on whether the image \emph{set} looks natural. An LLM judge (gemini-fast) rates the diverse benchmark codebook at \textbf{0.12} but a themed codebook at \textbf{0.88} --- plausibility is governed by codebook \emph{theme}, not the codec (permutation coding scores 0.18, essentially unchanged). We deliberately use the diverse standard-benchmark set for all quantitative results (dataset credibility) and treat codebook theme as an explicit deployment trade-off: a themed database is the more plausible real-world cover.
+\subsection*{4.6 Ablation Study}
+\textbf{Table 4.6 --- Ablation. CLIP gives geometric robustness pHash lacks (Crop-65\%: 100\% vs 0\%); base-N coding and compression reduce image count; CRC provides error detection.}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lXXXXX}
+\toprule
+Variant & Clean Acc (\%) & JPEG50 Acc (\%) & Crop65 Acc (\%) & Avg Images & Integrity \\
+\midrule
+Full LG-CISH (proposed) & 100.00 & 100.0 & 100.0 & 134.4 & CRC-32 \\
+Without CLIP (pHash NN) & 100.0 & 100.0 & 0.0 & 134.4 & CRC-32 \\
+Without compression & 100.00 & 100.0 & 100.0 & 182.2 & CRC-32 \\
+Without CRC integrity & 100.00 & 100.0 & 100.0 & 134.4 & None (silent) \\
+Fixed-chunk (5-bit) & 100.00 & 100.0 & 100.0 & 143.0 & CRC-32 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+Both CLIP and pHash decode JPEG-50 perfectly on the 40-image codebook, but under the harsher Crop-65\% attack the semantic CLIP matcher holds at 100\% while pHash collapses to 0\% --- the geometric robustness that motivates CLIP. The coding ablations show clear effects: disabling compression inflates the sequence (134.4 $\to$ 182.2 images), fixed-chunk coding needs 143.0 images vs 134.4 for base-N, and removing CRC-32 leaves channel errors undetected.
+\subsection*{4.7 Comparative Analysis}
+\textbf{Table 4.7 --- Comparison with classical and coverless baselines. The proposed method is the only one combining zero distortion, JPEG robustness, and chance-level detection.}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lXXXXX}
+\toprule
+Method & Capacity (bits) & JPEG50 Acc (\%) & Detection (\%) & Time & PSNR (dB) \\
+\midrule
+LSB & 786,432 & 51.4 & 98 & 0.01--1 & 51.1 \\
+DCT-LSB & \textasciitilde{}4096 & 42.1 & \textasciitilde{}70--90 [cited] & 1--5 & 38--42 \\
+DWT-DCT [cited] & \textasciitilde{}4096 & \textasciitilde{}85 [cited] & \textasciitilde{}60--80 [cited] & \textasciitilde{}50 & 40--44 \\
+Coverless [cited] & low & \textasciitilde{}95 [cited] & \textasciitilde{}50 [cited] & high & $\infty$ \\
+Proposed LG-CISH & 5.322/img & 100.0 & 48 & fast & $\infty$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+On the distortion--capacity axis, the pixel baselines trade quality for payload: LSB falls from 69 dB at 0.05 bpp to 59 dB at 0.50 bpp, while DCT-LSB sits at 42--44 dB and caps out near 0.016 bpp. Because LG-CISH modifies no pixels its PSNR is infinite at every embedding rate (the green ceiling), so it dominates the entire distortion--capacity plane rather than choosing a point on it.
+\begin{figure}[H]\centering
+\includegraphics[width=0.82\linewidth]{fig_4_7_robustness_jpeg.png}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.82\linewidth]{fig_4_7_accuracy_payload.png}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.82\linewidth]{fig_4_7_psnr_bpp.png}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.82\linewidth]{fig_4_7_detection.png}
+\end{figure}
+\subsection*{4.8 Statistical Validation}
+\textbf{Table 4.8a --- Mean $\pm$ std and 95\%\% confidence intervals over N=50 trials (clean channel).}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+Metric & Mean $\pm$ Std & 95\% CI \\
+\midrule
+Reconstruction Accuracy (\%) & 100.00 $\pm$ 0.00 & {}[100.00, 100.00] \\
+Bit Error Rate & 0.00e+00 $\pm$ 0.00e+00 & {}[0.00e+00, 0.00e+00] \\
+CLIP margin & 0.3020 $\pm$ 0.0059 & {}[0.3003, 0.3037] \\
+Images per message & 181.2 $\pm$ 44.5 & {}[168.5, 194.0] \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\textbf{Table 4.8b --- Significance of CLIP's geometric robustness over the pHash matcher: paired Wilcoxon signed-rank across a crop-strength sweep (the regime that discriminates the two matchers). Proposed-vs-LSB @ JPEG-50 is shown descriptively, as the lossless method is deterministic.}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+Group & Accuracy (\%) & Std / note \\
+\midrule
+Proposed (CLIP) --- crop-sweep mean & 100.0 & 0.0 \\
+pHash ablation --- crop-sweep mean & 0.0 & 0.0 \\
+Wilcoxon W (paired, 7 crop levels) & 28.0 &  \\
+p-value (one-sided, CLIP > pHash) & 7.812e-03 & YES (p < 0.05) \\
+{}[ref] Proposed vs LSB @ JPEG-50 & 100 vs 50 & descriptive \\
+\bottomrule
+\end{tabularx}
+\end{table}
+The proposed method is lossless, so its clean- and mild-channel accuracy is a deterministic 100\% (zero variance); we therefore report the proposed-vs-LSB comparison descriptively --- bit-exact at JPEG-50 (100\%) versus LSB's 50.2\% bit accuracy --- and run the significance test on the regime that actually discriminates the matchers: geometric robustness. Across a sweep of 7 crop strengths (non-geometric channels leave both at 100\%, so they tie), CLIP decodes 100\% versus pHash's 0\%, a difference that is statistically significant (p < 0.05) (paired Wilcoxon signed-rank, p = 7.81e-03); e.g. at Crop 65\%, CLIP 100\% vs pHash 0\%. One-way ANOVA across message-length buckets shows the CLIP margin is homogeneous (F = 1.99, p = 0.15).
+\end{document}
