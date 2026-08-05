@@ -1,8 +1,0 @@
-**Table 4.3d — Coding modes. Permutation coding trades a little capacity for a no-repeat, more plausible cover; smaller blocks recover most of the capacity.**
-
-| Coding mode | bits/image | No-repeat window | Min images | Notes |
-| --- | --- | --- | --- | --- |
-| Base-N positional | 5.322 | none (repeats allowed) | 1 | max capacity; images may repeat |
-| Permutation (block=8) | 5.187 | 8 images | 8 | no repeats within a block |
-| Permutation (block=16) | 5.008 | 16 images | 16 | no repeats within a block |
-| Permutation (block=40 = N) | 3.979 | 40 images | 40 | no repeats within a block (full permutation) |
