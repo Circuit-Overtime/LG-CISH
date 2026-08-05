@@ -78,9 +78,9 @@ Steganography via CLIP Semantic Hashing and Base-$N$ Positional Coding}}
 \author{%
 \begin{minipage}{0.95\textwidth}
 \centering
-Ayushman Bhattacharya$^{1}$, Shreya Dutta$^{2}$,
+Ayushman Bhattacharya$^{1*}$, Shreya Dutta$^{2}$,
 Piyali Sarkar$^{3}$, Soumyashree Biswas$^{4}$,\\
-Harsh Raj$^{5}$, and Dr.\ Abhrendu Bhattacharya$^{6}$\\[0.5em]
+Harsh Raj$^{5}$, Dr.\ Abhrendu Bhattacharya$^{6*}$\\[0.5em], Dr.\  Bidisha Bhabani$^{7}$\\[0.5em]
 {\small $^{1\text{--}6}$Department of Computer Science and Engineering, JIS University,\\
 Kolkata, West Bengal, India}\\[0.5em]
 {\scriptsize
@@ -95,17 +95,30 @@ $^{4}$\href{mailto:soumya7biswas@gmail.com}{\texttt{soumya7biswas@gmail.com}},
 $^{5}$\href{mailto:harsh.cs.dev@gmail.com}{\texttt{harsh.cs.dev@gmail.com}},
 \href{https://orcid.org/0009-0004-9025-8204}{ORCID: 0009-0004-9025-8204}\\
 $^{6}$\href{mailto:abhrendu.bhattacharya@jisuniversity.ac.in}{\texttt{abhrendu.bhattacharya@jisuniversity.ac.in}},
-\href{https://orcid.org/0009-0009-8549-1024}{ORCID: 0009-0009-8549-1024}}
+\href{https://orcid.org/0009-0009-8549-1024}{ORCID: 0009-0009-8549-1024}\\,
+$^{7}$\href{mailto:bidisha.bhabani@jisuniversity.ac.in}{\texttt{bidisha.bhabani@jisuniversity.ac.in}},
+\href{https://orcid.org/0009-0000-5743-6882}{ORCID: 0009-0009-8549-1024}}
 \end{minipage}}
 \date{}
 
 \begin{document}
 \maketitle
 
+\begin{center}
+{\small
+\textbf{Corresponding Authors:}
+Ayushman Bhattacharya$^{1*}$
+(\href{mailto@gmail.com}{\texttt{bhattacharyaa599@gmail.com}})
+and Dr.\ Abhrendu Bhattacharya$^{6*}$
+(\href{mailto.bhattacharya@jisuniversity.ac.in}
+{\texttt{abhrendu.bhattacharya@jisuniversity.ac.in}})
+}
+\end{center}
+
 \begin{abstract}
 \noindent
 Embedding-based image steganography perturbs cover pixels and is therefore
-detectable by modern statistical and CNN steganalysers. We present \textbf{LG-CISH},
+detectable by modern statistical and CNN steganalysers. We present LG-CISH,
 a fully \emph{lossless} \emph{coverless} scheme that hides a secret message in a
 sequence of \emph{unmodified} natural images: the identity and order of the images
 carry the data. LG-CISH combines two ideas. First, each codebook image is
